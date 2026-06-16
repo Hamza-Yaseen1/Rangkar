@@ -1,0 +1,23 @@
+{
+  "version": 1,
+  "skills": {
+    "creative-design": {
+      "source": "cerico/macfair",
+      "sourceType": "github",
+      "skillPath": "files/claude/skills/creative-design/SKILL.md",
+      "computedHash": "fcf52ff0fef5eb5204dc91fd7d1b188159307c6ef6b472c2c4eadf306e5d1233"
+    },
+    "high-end-visual-design": {
+      "source": "leonxlnx/taste-skill",
+      "sourceType": "github",
+      "skillPath": "skills/soft-skill/SKILL.md",
+      "computedHash": "f730e4132775f13eea19e3dc39afc6bb453cfc0498872b127ad8f0d47cfd802d"
+    },
+    "web-design-guidelines": {
+      "source": "vercel-labs/agent-skills",
+      "sourceType": "github",
+      "skillPath": "skills/web-design-guidelines/SKILL.md",
+      "computedHash": "d8e7d3afe37dcc8a97b99ffb5afdb4d0919ae0092ea8b68f44eb201f035e33ac"
+    }
+  }
+}
