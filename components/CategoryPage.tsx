@@ -3,7 +3,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { useState, useCallback, useEffect, useRef, useMemo } from "react";
-import { products, categories, formatPKR, categoryImages } from "@/app/lib/data";
+import { products, formatPKR } from "@/app/lib/data";
 import type { Product } from "@/app/lib/data";
 import { useCart } from "@/app/context/cart";
 
@@ -136,7 +136,7 @@ function ProductCard({
             sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
             className="object-cover transition-all duration-700 ease-[cubic-bezier(0.32,0.72,0,1)] group-hover:scale-105"
             loading="lazy"
-          />  
+          />
           {product.isSale && (
             <span className="absolute top-3 left-3 bg-[#9B2C2C] text-white text-[10px] font-bold uppercase tracking-[0.1em] px-3 py-1 rounded-full">
               -{discount}%
@@ -182,46 +182,26 @@ function ProductCard({
   );
 }
 
-function CategoryBanner({ name, imageId }: { name: string; imageId: number }) {
-  const { ref, visible } = useScrollReveal(0.1);
-
-  return (
-    <div
-      ref={ref}
-      className={`group relative rounded-2xl overflow-hidden bg-[#F5F0EB] aspect-[4/5] transition-all duration-1000 ease-[cubic-bezier(0.32,0.72,0,1)] ${
-        visible ? "translate-y-0 blur-0 opacity-100" : "translate-y-8 blur-sm opacity-0"
-      }`}
-    >
-      <Image
-          src={`https://picsum.photos/id/${imageId}/400/500`}
-        alt={name}
-        fill
-        sizes="(max-width: 640px) 100vw, (max-width: 1024px) 33vw, 20vw"
-        className="object-cover transition-all duration-700 ease-[cubic-bezier(0.32,0.72,0,1)] group-hover:scale-105"
-        loading="lazy"
-      />
-      <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/10 to-transparent" />
-      <div className="absolute bottom-0 left-0 right-0 p-5 sm:p-6">
-        <h3 className="text-lg sm:text-xl font-bold text-white">{name}</h3>
-        <span className="inline-flex items-center gap-1.5 text-sm text-white/80 mt-1 transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] group-hover:gap-2.5">
-          Shop Now
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round" className="w-3.5 h-3.5" aria-hidden="true">
-            <path d="M5 12h14" />
-            <path d="M12 5l7 7-7 7" />
-          </svg>
-        </span>
-      </div>
-    </div>
-  );
+interface CategoryPageProps {
+  title: string;
+  subtitle: string;
+  category?: Product["category"];
+  isSale?: boolean;
+  bannerImageId?: number;
 }
 
-export default function Home() {
+export default function CategoryPage({
+  title,
+  subtitle,
+  category,
+  isSale,
+  bannerImageId = 30,
+}: CategoryPageProps) {
   const { addToCart: addToCartCtx, cartCount } = useCart();
   const [toastMsg, setToastMsg] = useState("");
   const [toastVisible, setToastVisible] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
-  const [activeCategory, setActiveCategory] = useState("All");
   const searchRef = useRef<HTMLInputElement>(null);
 
   const showToast = useCallback((msg: string) => {
@@ -239,8 +219,12 @@ export default function Home() {
   );
 
   const filteredProducts = useMemo(
-    () => (activeCategory === "All" ? products : products.filter((p) => p.category === activeCategory)),
-    [activeCategory],
+    () => products.filter((p) => {
+      if (isSale) return p.isSale === true;
+      if (category) return p.category === category;
+      return true;
+    }),
+    [category, isSale],
   );
 
   useEffect(() => {
@@ -266,7 +250,7 @@ export default function Home() {
   return (
     <div className="relative min-h-screen bg-[#FDFBF7] text-[#1A1A1A] font-sans antialiased selection:bg-[#C9A96E]/30">
 
-      {/* Grain overlay for paper texture */}
+      {/* Grain overlay */}
       <div
         className="fixed inset-0 z-[60] pointer-events-none opacity-[0.015]"
         style={{
@@ -285,11 +269,8 @@ export default function Home() {
         </span>
       </div>
 
-      {/* Floating Nav Island */}
-      <nav
-        className="sticky top-0 z-40 flex justify-center px-4 pt-0"
-        aria-label="Main navigation"
-      >
+      {/* Nav */}
+      <nav className="sticky top-0 z-40 flex justify-center px-4" aria-label="Main navigation">
         <div className="flex items-center justify-between w-full max-w-6xl px-4 sm:px-6 h-16 bg-white/90 backdrop-blur-xl border-b border-black/5 shadow-sm">
           <Link
             href="/"
@@ -300,48 +281,12 @@ export default function Home() {
           </Link>
 
           <div className="hidden md:flex items-center gap-7 text-[12px] font-medium uppercase tracking-[0.12em] text-zinc-500">
-            <Link
-              href="/"
-              className="text-[#1A1A1A] transition-colors duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] hover:text-[#C9A96E]"
-              tabIndex={menuOpen ? -1 : 0}
-            >
-              Home
-            </Link>
-            <Link
-              href="/sale"
-              className="text-[#9B2C2C] transition-colors duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] hover:text-[#C9A96E]"
-              tabIndex={menuOpen ? -1 : 0}
-            >
-              Sale
-            </Link>
-            <Link
-              href="/unstitched"
-              className="transition-colors duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] hover:text-[#1A1A1A]"
-              tabIndex={menuOpen ? -1 : 0}
-            >
-              Unstitched
-            </Link>
-            <Link
-              href="/ready-to-wear"
-              className="transition-colors duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] hover:text-[#1A1A1A]"
-              tabIndex={menuOpen ? -1 : 0}
-            >
-              Ready to Wear
-            </Link>
-            <Link
-              href="/men"
-              className="transition-colors duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] hover:text-[#1A1A1A]"
-              tabIndex={menuOpen ? -1 : 0}
-            >
-              Men
-            </Link>
-            <Link
-              href="/beauty"
-              className="transition-colors duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] hover:text-[#1A1A1A]"
-              tabIndex={menuOpen ? -1 : 0}
-            >
-              Beauty
-            </Link>
+            <Link href="/" className="transition-colors duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] hover:text-[#1A1A1A]" tabIndex={menuOpen ? -1 : 0}>Home</Link>
+            <Link href="/sale" className={`transition-colors duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] hover:text-[#C9A96E] ${isSale ? "text-[#9B2C2C]" : "text-zinc-500 hover:text-[#1A1A1A]"}`} tabIndex={menuOpen ? -1 : 0}>Sale</Link>
+            <Link href="/unstitched" className="transition-colors duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] hover:text-[#1A1A1A]" tabIndex={menuOpen ? -1 : 0}>Unstitched</Link>
+            <Link href="/ready-to-wear" className="transition-colors duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] hover:text-[#1A1A1A]" tabIndex={menuOpen ? -1 : 0}>Ready to Wear</Link>
+            <Link href="/men" className="transition-colors duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] hover:text-[#1A1A1A]" tabIndex={menuOpen ? -1 : 0}>Men</Link>
+            <Link href="/beauty" className="transition-colors duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] hover:text-[#1A1A1A]" tabIndex={menuOpen ? -1 : 0}>Beauty</Link>
           </div>
 
           <div className="flex items-center gap-0.5">
@@ -365,21 +310,9 @@ export default function Home() {
               className="relative ml-1 p-2.5 rounded-full hover:bg-black/5 transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] focus-visible:ring-2 focus-visible:ring-[#C9A96E] outline-none"
             >
               <div className="relative w-[18px] h-[18px] flex items-center justify-center">
-                <span
-                  className={`absolute block h-[1.5px] w-[18px] bg-current rounded-full transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] ${
-                    menuOpen ? "rotate-45 translate-y-0" : "-translate-y-[5px]"
-                  }`}
-                />
-                <span
-                  className={`absolute block h-[1.5px] w-[18px] bg-current rounded-full transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] ${
-                    menuOpen ? "opacity-0 scale-0" : "opacity-100 scale-100"
-                  }`}
-                />
-                <span
-                  className={`absolute block h-[1.5px] w-[18px] bg-current rounded-full transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] ${
-                    menuOpen ? "-rotate-45 translate-y-0" : "translate-y-[5px]"
-                  }`}
-                />
+                <span className={`absolute block h-[1.5px] w-[18px] bg-current rounded-full transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] ${menuOpen ? "rotate-45 translate-y-0" : "-translate-y-[5px]"}`} />
+                <span className={`absolute block h-[1.5px] w-[18px] bg-current rounded-full transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] ${menuOpen ? "opacity-0 scale-0" : "opacity-100 scale-100"}`} />
+                <span className={`absolute block h-[1.5px] w-[18px] bg-current rounded-full transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] ${menuOpen ? "-rotate-45 translate-y-0" : "translate-y-[5px]"}`} />
               </div>
             </button>
           </div>
@@ -389,9 +322,7 @@ export default function Home() {
       {/* Search overlay */}
       <div
         className={`fixed inset-0 z-30 flex items-start justify-center pt-24 sm:pt-28 px-4 transition-all duration-700 ease-[cubic-bezier(0.32,0.72,0,1)] ${
-          searchOpen
-            ? "opacity-100 pointer-events-auto"
-            : "opacity-0 pointer-events-none"
+          searchOpen ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"
         }`}
         role="dialog"
         aria-modal="true"
@@ -411,20 +342,13 @@ export default function Home() {
             />
           </div>
         </div>
-        <button
-          type="button"
-          aria-label="Close search"
-          className="absolute inset-0 -z-10"
-          onClick={() => setSearchOpen(false)}
-        />
+        <button type="button" aria-label="Close search" className="absolute inset-0 -z-10" onClick={() => setSearchOpen(false)} />
       </div>
 
-      {/* Mobile Menu Overlay */}
+      {/* Mobile Menu */}
       <div
         className={`fixed inset-0 z-30 flex flex-col items-center justify-center gap-10 backdrop-blur-3xl bg-[#FDFBF7]/95 transition-all duration-700 ease-[cubic-bezier(0.32,0.72,0,1)] ${
-          menuOpen
-            ? "opacity-100 pointer-events-auto"
-            : "opacity-0 pointer-events-none"
+          menuOpen ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"
         }`}
         role="dialog"
         aria-modal="true"
@@ -436,9 +360,7 @@ export default function Home() {
             href={label === "Home" ? "/" : `/${label.toLowerCase().replace(/\s+/g, "-")}`}
             onClick={() => setMenuOpen(false)}
             className={`text-3xl sm:text-4xl font-bold tracking-tight text-[#1A1A1A] transition-all duration-700 ease-[cubic-bezier(0.32,0.72,0,1)] hover:text-[#C9A96E] ${
-              menuOpen
-                ? "translate-y-0 opacity-100"
-                : "translate-y-12 opacity-0"
+              menuOpen ? "translate-y-0 opacity-100" : "translate-y-12 opacity-0"
             }`}
             style={{ transitionDelay: menuOpen ? `${150 + i * 100}ms` : "0ms" }}
           >
@@ -447,176 +369,86 @@ export default function Home() {
         ))}
       </div>
 
-      {/* Hero — Editorial Split */}
-      <section className="relative px-4 sm:px-6 lg:px-8 pt-12 pb-16 sm:pb-24">
+      {/* Breadcrumb */}
+      <section className="px-4 sm:px-6 lg:px-8 pt-6 pb-2">
         <div className="mx-auto w-full max-w-6xl">
-          <div className="flex flex-col lg:flex-row lg:items-center gap-10 lg:gap-16">
-            <AnimatedSection className="flex-1 max-w-xl">
-              <span className="inline-flex items-center gap-2 rounded-full bg-[#C9A96E]/10 border border-[#C9A96E]/20 px-4 py-1.5 text-[10px] uppercase tracking-[0.25em] font-semibold text-[#9B7E3A] mb-6">
-                <span className="w-1.5 h-1.5 rounded-full bg-[#C9A96E]" />
-                Summer Collection &apos;26
-              </span>
-              <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold tracking-[-0.04em] leading-[1.05] text-[#1A1A1A] text-pretty">
-                Tradition
-                <br />
-                <span className="text-[#C9A96E]">Reimagined</span>
-                <br />
-                for Today
-              </h1>
-              <p className="mt-5 text-base sm:text-lg leading-relaxed text-zinc-500 text-pretty max-w-md">
-                Discover premium unstitched fabrics, ready-to-wear ensembles, and timeless accessories crafted for the modern Pakistani wardrobe.
-              </p>
-              <div className="mt-8 flex items-center gap-4">
-                <a
-                  href="#products"
-                  className="group inline-flex items-center gap-3 rounded-full bg-[#1A1A1A] px-7 py-3.5 text-sm font-semibold text-white transition-all duration-700 ease-[cubic-bezier(0.32,0.72,0,1)] hover:bg-[#9B2C2C] focus-visible:ring-2 focus-visible:ring-[#C9A96E] outline-none active:scale-[0.98]"
-                >
-                  Shop Sale
-                  <span className="w-7 h-7 rounded-full bg-white/10 flex items-center justify-center transition-all duration-700 ease-[cubic-bezier(0.32,0.72,0,1)] group-hover:translate-x-0.5">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round" className="w-3.5 h-3.5" aria-hidden="true">
-                      <path d="M5 12h14" />
-                      <path d="M12 5l7 7-7 7" />
-                    </svg>
-                  </span>
-                </a>
-                <button
-                  type="button"
-                  onClick={() => alert("Explore new arrivals")}
-                  className="group inline-flex items-center gap-2 rounded-full px-7 py-3.5 text-sm font-medium text-zinc-500 transition-all duration-700 ease-[cubic-bezier(0.32,0.72,0,1)] hover:text-[#1A1A1A] focus-visible:ring-2 focus-visible:ring-[#C9A96E] outline-none active:scale-[0.98]"
-                >
-                  New Arrivals
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round" className="w-3.5 h-3.5 transition-transform duration-700 ease-[cubic-bezier(0.32,0.72,0,1)] group-hover:translate-x-0.5" aria-hidden="true">
-                    <path d="M5 12h14" />
-                    <path d="M12 5l7 7-7 7" />
-                  </svg>
-                </button>
-              </div>
-            </AnimatedSection>
+          <nav className="flex items-center gap-2 text-[11px] uppercase tracking-[0.15em] font-medium text-zinc-400" aria-label="Breadcrumb">
+            <Link href="/" className="transition-colors duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] hover:text-[#1A1A1A]">Home</Link>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round" className="w-3 h-3" aria-hidden="true">
+              <path d="M9 18l6-6-6-6" />
+            </svg>
+            <span className="text-[#1A1A1A]">{title}</span>
+          </nav>
+        </div>
+      </section>
 
-            <div className="flex-1 relative">
-              <div className="relative rounded-2xl overflow-hidden bg-[#F5F0EB] aspect-[4/5] sm:aspect-[3/4] lg:aspect-[4/5] max-w-lg mx-auto lg:mx-0 lg:ml-auto shadow-[0_20px_60px_rgba(0,0,0,0.08)]">
-                <Image
-                  src="https://images.unsplash.com/photo-1779292024314-0cf606ad457e?w=600&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8NTJ8fHBha2lzdGFuaSUyMGNsb3RoZXMlMjBnaXJsc3xlbnwwfHwwfHx8MA%3D%3D0"
-                  alt="Pakistani fashion model"
-                  fill
-                  sizes="(max-width: 1024px) 100vw, 50vw"
-                  className="object-cover"
-                  priority
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent" />
-                <div className="absolute bottom-4 left-4 right-4 bg-white/90 backdrop-blur-sm rounded-xl px-4 py-3 text-center">
-                  <p className="text-[10px] uppercase tracking-[0.2em] font-medium text-zinc-500">Starting from</p>
-                  <p className="text-lg font-bold text-[#1A1A1A]">{formatPKR(2490)}</p>
+      {/* Hero Banner */}
+      <section className="px-4 sm:px-6 lg:px-8 pt-6 pb-10 sm:pb-14">
+        <div className="mx-auto w-full max-w-6xl">
+          <AnimatedSection>
+            <div className={`relative rounded-2xl overflow-hidden ${isSale ? "bg-gradient-to-r from-[#9B2C2C] to-[#7A1F1F]" : "bg-gradient-to-r from-[#1A1A1A] to-[#333]"} px-8 py-12 sm:py-16`}>
+              <div className="absolute inset-0 opacity-10" aria-hidden="true">
+                <div className="absolute top-0 left-1/4 w-64 h-64 rounded-full bg-white blur-[80px]" />
+                <div className="absolute bottom-0 right-1/4 w-48 h-48 rounded-full bg-[#C9A96E] blur-[60px]" />
+              </div>
+              <div className="relative z-10 flex flex-col sm:flex-row items-center gap-6 sm:gap-10">
+                <div className="flex-1 text-center sm:text-left">
+                  <span className={`inline-block rounded-full px-4 py-1 text-[10px] uppercase tracking-[0.25em] font-semibold mb-4 ${isSale ? "bg-white/10 text-white/80" : "bg-[#C9A96E]/10 text-[#C9A96E]"}`}>
+                    {isSale ? "Limited Offer" : "Collection"}
+                  </span>
+                  <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold tracking-[-0.03em] text-white">
+                    {title}
+                  </h1>
+                  <p className="mt-3 text-white/70 text-sm sm:text-base max-w-md mx-auto sm:mx-0">
+                    {subtitle}
+                  </p>
+                  <p className="mt-2 text-white/50 text-xs">
+                    {filteredProducts.length} item{filteredProducts.length !== 1 ? "s" : ""}
+                  </p>
+                </div>
+                <div className="w-32 h-32 sm:w-40 sm:h-40 rounded-2xl overflow-hidden bg-white/10 shrink-0 ring-1 ring-white/10">
+                  <Image
+                    src={`https://picsum.photos/id/${bannerImageId}/200/200`}
+                    alt={title}
+                    width={160}
+                    height={160}
+                    className="w-full h-full object-cover"
+                  />
                 </div>
               </div>
             </div>
-          </div>
+          </AnimatedSection>
         </div>
       </section>
 
-      {/* Category Banners */}
-      <section className="px-4 sm:px-6 lg:px-8 pb-16 sm:pb-24">
+      {/* Products */}
+      <section className="px-4 sm:px-6 lg:px-8 pb-8" id="products">
         <div className="mx-auto w-full max-w-6xl">
-          <AnimatedSection>
-            <span className="inline-block rounded-full px-3 py-1 text-[10px] uppercase tracking-[0.25em] font-medium bg-[#C9A96E]/10 text-[#9B7E3A] mb-3">
-              Categories
-            </span>
-            <h2 className="text-2xl sm:text-3xl font-bold tracking-[-0.03em] text-[#1A1A1A]">
-              Shop by Category
-            </h2>
-          </AnimatedSection>
-
-          <div className="mt-8 grid grid-cols-2 md:grid-cols-4 gap-4 sm:gap-5">
-            {["Unstitched", "Ready to Wear", "Men", "Beauty"].map((cat) => (
-              <CategoryBanner key={cat} name={cat} imageId={categoryImages[cat] || 25} />
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Sale Strip */}
-      <section className="px-4 sm:px-6 lg:px-8 pb-16 sm:pb-24">
-        <div className="mx-auto w-full max-w-6xl">
-          <div className="relative rounded-2xl overflow-hidden bg-gradient-to-r from-[#9B2C2C] to-[#7A1F1F] px-8 py-12 sm:py-16 text-center">
-            <div className="absolute inset-0 opacity-10" aria-hidden="true">
-              <div className="absolute top-0 left-1/4 w-64 h-64 rounded-full bg-white blur-[80px]" />
-              <div className="absolute bottom-0 right-1/4 w-48 h-48 rounded-full bg-[#C9A96E] blur-[60px]" />
+          {filteredProducts.length > 0 ? (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 sm:gap-6">
+              {filteredProducts.map((product) => (
+                <ProductCard
+                  key={product.id}
+                  product={product}
+                  onAddToCart={addToCart}
+                />
+              ))}
             </div>
-            <div className="relative z-10">
-              <span className="inline-block rounded-full bg-white/10 px-4 py-1 text-[10px] uppercase tracking-[0.25em] font-semibold text-white/80 mb-4">
-                Limited Offer
-              </span>
-              <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold tracking-[-0.03em] text-white">
-                Summer Sale &mdash; Up to 50% Off
-              </h2>
-              <p className="mt-3 text-white/70 text-sm sm:text-base max-w-md mx-auto">
-                Premium unstitched suits, ready-to-wear ensembles, and more at unbeatable prices.
-              </p>
-              <a
-                href="#products"
-                className="mt-6 inline-flex items-center gap-2 rounded-full bg-[#C9A96E] px-8 py-3.5 text-sm font-semibold text-white transition-all duration-700 ease-[cubic-bezier(0.32,0.72,0,1)] hover:bg-[#B8952E] focus-visible:ring-2 focus-visible:ring-white outline-none active:scale-[0.98]"
-              >
-                Shop the Sale
-              </a>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Category Chips + Products */}
-      <section className="px-4 sm:px-6 lg:px-8 pb-8">
-        <div className="mx-auto w-full max-w-6xl">
-          <AnimatedSection>
-            <span className="inline-block rounded-full px-3 py-1 text-[10px] uppercase tracking-[0.25em] font-medium bg-[#C9A96E]/10 text-[#9B7E3A] mb-3">
-              Browse
-            </span>
-            <div className="flex items-center justify-between">
-              <h2 className="text-2xl sm:text-3xl font-bold tracking-[-0.03em] text-[#1A1A1A]">
-                All Products
-              </h2>
-              <span className="text-sm text-zinc-400">
-                {filteredProducts.length} item{filteredProducts.length !== 1 ? "s" : ""}
-              </span>
-            </div>
-          </AnimatedSection>
-
-          <AnimatedSection>
-            <div className="mt-6 flex items-center gap-2.5 overflow-x-auto pb-2" role="tablist" aria-label="Product categories">
-              {categories.map((cat) => {
-                const active = activeCategory === cat;
-                return (
-                  <button
-                    key={cat}
-                    type="button"
-                    role="tab"
-                    aria-selected={active}
-                    onClick={() => setActiveCategory(cat)}
-                    className={`rounded-full px-5 py-2.5 text-[11px] font-medium uppercase tracking-[0.15em] whitespace-nowrap transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] focus-visible:ring-2 focus-visible:ring-[#C9A96E] outline-none active:scale-[0.97] ${
-                      active
-                        ? "bg-[#1A1A1A] text-white shadow-md"
-                        : "bg-white text-zinc-500 ring-1 ring-black/5 hover:bg-[#F5F0EB] hover:text-[#1A1A1A]"
-                    }`}
-                  >
-                    {cat}
-                  </button>
-                );
-              })}
-            </div>
-          </AnimatedSection>
-
-          <div className="mt-8 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 sm:gap-6">
-            {filteredProducts.map((product) => (
-              <ProductCard
-                key={product.id}
-                product={product}
-                onAddToCart={addToCart}
-              />
-            ))}
-          </div>
-
-          {filteredProducts.length === 0 && (
+          ) : (
             <div className="text-center py-20">
+              <div className="mx-auto w-16 h-16 rounded-full bg-[#F5F0EB] flex items-center justify-center mb-4">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1} strokeLinecap="round" strokeLinejoin="round" className="w-7 h-7 text-zinc-300" aria-hidden="true">
+                  <circle cx="11" cy="11" r="8" />
+                  <path d="M21 21l-4.35-4.35" />
+                </svg>
+              </div>
               <p className="text-zinc-400 text-sm">No products found in this category.</p>
+              <Link
+                href="/"
+                className="group mt-4 inline-flex items-center gap-2 rounded-full bg-[#1A1A1A] px-6 py-3 text-xs font-semibold text-white transition-all duration-700 ease-[cubic-bezier(0.32,0.72,0,1)] hover:bg-[#9B2C2C] focus-visible:ring-2 focus-visible:ring-[#C9A96E] outline-none active:scale-[0.98]"
+              >
+                Browse All Products
+              </Link>
             </div>
           )}
         </div>
@@ -668,9 +500,7 @@ export default function Home() {
                 <ul className="space-y-2.5">
                   {group.links.map((link) => (
                     <li key={link}>
-                      <Link href="/" className="text-sm text-zinc-500 transition-colors duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] hover:text-[#C9A96E]">
-                        {link}
-                      </Link>
+                      <Link href="/" className="text-sm text-zinc-500 transition-colors duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] hover:text-[#C9A96E]">{link}</Link>
                     </li>
                   ))}
                 </ul>

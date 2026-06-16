@@ -1,7 +1,25 @@
 "use client";
 
-import { createContext, useContext, useState, useCallback, ReactNode } from "react";
+import { createContext, useContext, useState, useCallback, useEffect, ReactNode } from "react";
 import type { Product } from "@/app/lib/data";
+
+const STORAGE_KEY = "shop-cart";
+
+function loadCart(): Record<number, number> {
+  if (typeof window === "undefined") return {};
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) return {};
+    const parsed = JSON.parse(raw);
+    if (typeof parsed !== "object" || parsed === null || Array.isArray(parsed)) return {};
+    for (const key of Object.keys(parsed)) {
+      if (typeof parsed[key] !== "number" || parsed[key] < 1) return {};
+    }
+    return parsed as Record<number, number>;
+  } catch {
+    return {};
+  }
+}
 
 interface CartContextType {
   cart: Record<number, number>;
@@ -16,6 +34,19 @@ const CartContext = createContext<CartContextType | undefined>(undefined);
 
 export function CartProvider({ children }: { children: ReactNode }) {
   const [cart, setCart] = useState<Record<number, number>>({});
+
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setCart(loadCart());
+  }, []);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(cart));
+    } catch {
+      // Storage full or unavailable — silently fail
+    }
+  }, [cart]);
 
   const addToCart = useCallback((product: Product, quantity = 1) => {
     setCart((prev) => ({

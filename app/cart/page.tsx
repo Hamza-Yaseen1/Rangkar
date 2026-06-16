@@ -100,10 +100,10 @@ function CartItem({
           <button
             type="button"
             onClick={() => removeItem(product.id)}
-            className="p-2 rounded-full text-zinc-300 hover:text-[#9B2C2C] hover:bg-red-50 transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] focus-visible:ring-2 focus-visible:ring-[#C9A96E] outline-none"
+            className="p-2  rounded-full text-black-300 hover:text-[#9B2C2C] hover:bg-red-50 transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] focus-visible:ring-2 focus-visible:ring-[#C9A96E] outline-none"
             aria-label={`Remove ${product.name}`}
           >
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.2} strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.2} strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5" aria-hidden="true">
               <path d="M3 6h18" />
               <path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2" />
               <path d="M10 11v6" />
@@ -160,16 +160,25 @@ export default function CartPage() {
             <Link href="/" className="transition-colors duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] hover:text-[#1A1A1A]">
               Home
             </Link>
-            <Link href="/shop" className="transition-colors duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] hover:text-[#1A1A1A]">
-              Shop
-            </Link>
             <Link href="/sale" className="text-[#9B2C2C] transition-colors duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] hover:text-[#C9A96E]">
               Sale
+            </Link>
+            <Link href="/unstitched" className="transition-colors duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] hover:text-[#1A1A1A]">
+              Unstitched
+            </Link>
+            <Link href="/ready-to-wear" className="transition-colors duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] hover:text-[#1A1A1A]">
+              Ready to Wear
+            </Link>
+            <Link href="/men" className="transition-colors duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] hover:text-[#1A1A1A]">
+              Men
+            </Link>
+            <Link href="/beauty" className="transition-colors duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] hover:text-[#1A1A1A]">
+              Beauty
             </Link>
           </div>
 
           <div className="flex items-center gap-2">
-            <div className="relative">
+            <Link href="/cart" className="relative p-1">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.2} strokeLinecap="round" strokeLinejoin="round" className="w-[18px] h-[18px] text-zinc-400" aria-hidden="true">
                 <path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z" />
                 <path d="M3 6h18" />
@@ -180,7 +189,7 @@ export default function CartPage() {
                   {cartCount}
                 </span>
               )}
-            </div>
+            </Link>
           </div>
         </div>
       </nav>

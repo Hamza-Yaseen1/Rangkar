@@ -98,10 +98,10 @@ function SuccessModal({
         aria-modal="true"
         aria-labelledby="success-title"
       >
-        <div className="mx-auto w-16 h-16 rounded-full bg-[#1A1A1A] flex items-center justify-center mb-5">
+        <div className=" mx-auto w-16 h-16 rounded-full bg-[#1A1A1A] flex items-center justify-center mb-5">
           <svg viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round" className="w-7 h-7" aria-hidden="true">
             <path d="M20 6L9 17l-5-5" />
-          </svg>
+          </svg>   
         </div>
 
         <h2 id="success-title" className="text-2xl font-bold tracking-[-0.03em] text-[#1A1A1A]">
@@ -284,11 +284,20 @@ export default function CheckoutPage() {
             <Link href="/" className="transition-colors duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] hover:text-[#1A1A1A]">
               Home
             </Link>
-            <Link href="/shop" className="transition-colors duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] hover:text-[#1A1A1A]">
-              Shop
-            </Link>
             <Link href="/sale" className="text-[#9B2C2C] transition-colors duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] hover:text-[#C9A96E]">
               Sale
+            </Link>
+            <Link href="/unstitched" className="transition-colors duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] hover:text-[#1A1A1A]">
+              Unstitched
+            </Link>
+            <Link href="/ready-to-wear" className="transition-colors duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] hover:text-[#1A1A1A]">
+              Ready to Wear
+            </Link>
+            <Link href="/men" className="transition-colors duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] hover:text-[#1A1A1A]">
+              Men
+            </Link>
+            <Link href="/beauty" className="transition-colors duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] hover:text-[#1A1A1A]">
+              Beauty
             </Link>
           </div>
 
