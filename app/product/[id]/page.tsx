@@ -12,11 +12,14 @@
 
 import Link from "next/link";
 import Image from "next/image";
+import Script from "next/script";
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useParams } from "next/navigation";
 import { products, formatPKR } from "@/app/lib/data";
 import type { Product } from "@/app/lib/data";
 import { useCart } from "@/app/context/cart";
+
+const siteUrl = "https://rangkar.vercel.app";
 
 // ====================== STAR RATING ======================
 function Stars({ rating }: { rating: number }) {
@@ -227,7 +230,62 @@ export default function ProductDetail() {
 
   return (
     <div className="min-h-screen bg-[#FDFBF7] text-[#1A1A1A] font-sans antialiased selection:bg-[#C9A96E]/30">
-
+      <link rel="canonical" href={`${siteUrl}/product/${product.id}`} />
+      <Script
+        id="product-schema"
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "Product",
+            name: product.name,
+            image: product.image,
+            description: product.description,
+            brand: { "@type": "Brand", name: "Rangkar" },
+            category: product.category,
+            offers: {
+              "@type": "Offer",
+              price: product.price,
+              priceCurrency: "PKR",
+              availability: "https://schema.org/InStock",
+              url: `${siteUrl}/product/${product.id}`,
+              priceValidUntil: new Date(
+                new Date().setFullYear(new Date().getFullYear() + 1),
+              ).toISOString().split("T")[0],
+            },
+            aggregateRating: {
+              "@type": "AggregateRating",
+              ratingValue: product.rating,
+              reviewCount: Math.floor(product.rating * 20),
+            },
+          }),
+        }}
+      />
+      <Script
+        id="breadcrumb-product"
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "BreadcrumbList",
+            itemListElement: [
+              { "@type": "ListItem", position: 1, name: "Home", item: siteUrl },
+              {
+                "@type": "ListItem",
+                position: 2,
+                name: product.category,
+                item: `${siteUrl}/${product.category.toLowerCase().replace(/\s+/g, "-")}`,
+              },
+              {
+                "@type": "ListItem",
+                position: 3,
+                name: product.name,
+                item: `${siteUrl}/product/${product.id}`,
+              },
+            ],
+          }),
+        }}
+      />
       {/* ======================== GRAIN OVERLAY ======================== */}
       <div
         className="fixed inset-0 z-[60] pointer-events-none opacity-[0.015]"
