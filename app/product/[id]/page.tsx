@@ -239,14 +239,14 @@ export default function ProductDetail() {
       />
 
       {/* ======================== SIMPLE NAV ======================== */}
-      {/* Minimal nav: logo + "Back to Home" link (not the full category list). */}
+      {/* Minimal nav: logo + "Back to Home" link with glassmorphism. */}
       <nav className="sticky top-0 z-40 flex justify-center px-4">
-        <div className="flex items-center justify-between w-full max-w-6xl px-4 sm:px-6 h-16 bg-white/90 backdrop-blur-xl border-b border-black/5 shadow-sm">
-          <Link href="/" className="text-lg font-bold tracking-tight text-[#1A1A1A]">
+        <div className="flex items-center justify-between w-full max-w-6xl px-4 sm:px-8 h-16 md:h-[72px] bg-white/70 backdrop-blur-2xl border-b border-white/20 shadow-[0_4px_30px_rgba(0,0,0,0.04)]">
+          <Link href="/" className="text-xl font-bold tracking-[-0.02em] text-[#1A1A1A] hover:opacity-80 transition-all duration-500">
             <span className="text-[#9B2C2C]">Rang</span>kar
           </Link>
-          <Link href="/" className="flex items-center gap-2 text-[12px] font-medium uppercase tracking-[0.12em] text-zinc-500 transition-colors duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] hover:text-[#1A1A1A]">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.2} strokeLinecap="round" strokeLinejoin="round" className="w-3.5 h-3.5" aria-hidden="true">
+          <Link href="/" className="group flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.15em] text-zinc-500 transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] hover:text-[#1A1A1A]">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.2} strokeLinecap="round" strokeLinejoin="round" className="w-3.5 h-3.5 transition-transform duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] group-hover:-translate-x-0.5" aria-hidden="true">
               <path d="M19 12H5" /><path d="M12 19l-7-7 7-7" />
             </svg>
             Back to Home

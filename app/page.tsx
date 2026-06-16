@@ -20,7 +20,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { useState, useCallback, useEffect, useRef, useMemo } from "react";
-import { products, categories, formatPKR, categoryImages } from "@/app/lib/data";
+import { products, categories, formatPKR, categoryImageUrls } from "@/app/lib/data";
 import type { Product } from "@/app/lib/data";
 import { useCart } from "@/app/context/cart";
 import { useSearch } from "@/app/context/search";
@@ -103,7 +103,7 @@ function IconCart({ count }: { count: number }) {
     <Link
       href="/cart"
       aria-label={`View cart${count > 0 ? `, ${count} item${count !== 1 ? "s" : ""}` : ""}`}
-      className="relative p-2 rounded-full hover:bg-black/5 transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] focus-visible:ring-2 focus-visible:ring-[#C9A96E] outline-none"
+      className="relative p-2.5 rounded-full hover:bg-black/5 hover:scale-105 active:scale-[0.97] transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] focus-visible:ring-2 focus-visible:ring-[#C9A96E] outline-none"
     >
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.2} strokeLinecap="round" strokeLinejoin="round" className="w-[18px] h-[18px]" aria-hidden="true">
         <path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z" />
@@ -111,7 +111,7 @@ function IconCart({ count }: { count: number }) {
         <path d="M16 10a4 4 0 01-8 0" />
       </svg>
       {count > 0 && (
-        <span className="absolute -top-1 -right-1 flex items-center justify-center w-[18px] h-[18px] rounded-full bg-[#9B2C2C] text-white text-[10px] font-bold">
+        <span className="absolute -top-1.5 -right-1.5 flex items-center justify-center w-[19px] h-[19px] rounded-full bg-[#9B2C2C] text-white text-[10px] font-bold shadow-[0_2px_8px_rgba(155,44,44,0.3)]">
           {count}
         </span>
       )}
@@ -222,9 +222,9 @@ function ProductCard({
 // ====================== CATEGORY BANNER ======================
 /**
  * A single category tile for the "Shop by Category" section.
- * imageId comes from the categoryImages map in data.ts (picsum IDs for hero banners).
+ * imageUrl is the full Pinterest URL from categoryImageUrls in data.ts.
  */
-function CategoryBanner({ name, imageId }: { name: string; imageId: number }) {
+function CategoryBanner({ name, imageUrl }: { name: string; imageUrl: string }) {
   const { ref, visible } = useScrollReveal(0.1);
 
   return (
@@ -235,7 +235,7 @@ function CategoryBanner({ name, imageId }: { name: string; imageId: number }) {
       }`}
     >
       <Image
-          src={`https://picsum.photos/id/${imageId}/400/500`}
+        src={imageUrl}
         alt={name}
         fill
         sizes="(max-width: 640px) 100vw, (max-width: 1024px) 33vw, 20vw"
@@ -346,51 +346,69 @@ export default function Home() {
       </div>
 
       {/* ======================== FLOATING NAV ISLAND ======================== */}
-      {/* Sticky top nav with full category links, search, cart, user, hamburger. */}
+      {/* Premium glassmorphism nav with hover underline effects on links. */}
       <nav
         className="sticky top-0 z-40 flex justify-center px-4 pt-0"
         aria-label="Main navigation"
       >
-        <div className="flex items-center justify-between w-full max-w-6xl px-4 sm:px-6 h-16 bg-white/90 backdrop-blur-xl border-b border-black/5 shadow-sm">
+        <div className="flex items-center justify-between w-full max-w-6xl px-4 sm:px-8 h-16 md:h-[72px] bg-white/70 backdrop-blur-2xl border-b border-white/20 shadow-[0_4px_30px_rgba(0,0,0,0.04)]">
           {/* Brand */}
           <Link
             href="/"
-            className={`text-lg font-bold tracking-tight text-[#1A1A1A] transition-all duration-500 ${menuOpen ? "opacity-0 pointer-events-none" : ""}`}
+            className={`text-xl font-bold tracking-[-0.02em] text-[#1A1A1A] transition-all duration-500 ${menuOpen ? "opacity-0 pointer-events-none" : ""} hover:opacity-80`}
             tabIndex={menuOpen ? -1 : 0}
           >
             <span className="text-[#9B2C2C]">Rang</span>kar
           </Link>
 
-          {/* Desktop nav links */}
-          <div className="hidden md:flex items-center gap-7 text-[12px] font-medium uppercase tracking-[0.12em] text-zinc-500">
-            <Link href="/" tabIndex={menuOpen ? -1 : 0} className="text-[#1A1A1A] transition-colors duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] hover:text-[#C9A96E]">Home</Link>
-            <Link href="/sale" tabIndex={menuOpen ? -1 : 0} className="text-[#9B2C2C] transition-colors duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] hover:text-[#C9A96E]">Sale</Link>
-            <Link href="/unstitched" tabIndex={menuOpen ? -1 : 0} className="transition-colors duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] hover:text-[#1A1A1A]">Unstitched</Link>
-            <Link href="/ready-to-wear" tabIndex={menuOpen ? -1 : 0} className="transition-colors duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] hover:text-[#1A1A1A]">Ready to Wear</Link>
-            <Link href="/men" tabIndex={menuOpen ? -1 : 0} className="transition-colors duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] hover:text-[#1A1A1A]">Men</Link>
-            <Link href="/beauty" tabIndex={menuOpen ? -1 : 0} className="transition-colors duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] hover:text-[#1A1A1A]">Beauty</Link>
+          {/* Desktop nav links — refined spacing + hover underline animation */}
+          <div className="hidden md:flex items-center gap-8 text-[11px] font-semibold uppercase tracking-[0.15em] text-zinc-500">
+            <Link
+              href="/"
+              tabIndex={menuOpen ? -1 : 0}
+              className="relative text-[#1A1A1A] transition-colors duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] hover:text-[#C9A96E] after:absolute after:left-0 after:-bottom-[3px] after:w-full after:h-[1.5px] after:bg-[#C9A96E] after:rounded-full after:transition-all after:duration-500"
+            >
+              Home
+            </Link>
+            <Link
+              href="/sale"
+              tabIndex={menuOpen ? -1 : 0}
+              className="relative text-[#9B2C2C] transition-colors duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] hover:text-[#C9A96E] after:absolute after:left-0 after:-bottom-[3px] after:w-0 after:h-[1.5px] after:bg-current after:rounded-full after:transition-all after:duration-500 hover:after:w-full"
+            >
+              Sale
+            </Link>
+            {["Unstitched", "Ready to Wear", "Men", "Beauty"].map((label) => (
+              <Link
+                key={label}
+                href={`/${label.toLowerCase().replace(/\s+/g, "-")}`}
+                tabIndex={menuOpen ? -1 : 0}
+                className="relative text-zinc-500 transition-colors duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] hover:text-[#1A1A1A] after:absolute after:left-0 after:-bottom-[3px] after:w-0 after:h-[1.5px] after:bg-current after:rounded-full after:transition-all after:duration-500 hover:after:w-full"
+              >
+                {label}
+              </Link>
+            ))}
           </div>
 
-          {/* Right icons */}
-          <div className="flex items-center gap-0.5">
+          {/* Right icons — enhanced hover with scale */}
+          <div className="flex items-center gap-1">
             <button
               type="button"
               aria-label="Search products"
               onClick={() => setSearchOpen(!searchOpen)}
-              className="p-2 rounded-full hover:bg-black/5 transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] focus-visible:ring-2 focus-visible:ring-[#C9A96E] outline-none"
+              className="p-2.5 rounded-full hover:bg-black/5 hover:scale-105 active:scale-[0.97] transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] focus-visible:ring-2 focus-visible:ring-[#C9A96E] outline-none"
               tabIndex={menuOpen ? -1 : 0}
             >
               <IconSearch />
             </button>
             <IconCart count={cartCount} />
             <IconUser />
-            {/* Hamburger */}
+            {/* Hamburger — enhanced hover */}
             <button
               type="button"
               aria-label={menuOpen ? "Close menu" : "Open menu"}
               aria-expanded={menuOpen}
               onClick={() => setMenuOpen(!menuOpen)}
-              className="relative ml-1 p-2.5 rounded-full hover:bg-black/5 transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] focus-visible:ring-2 focus-visible:ring-[#C9A96E] outline-none"
+              className="relative ml-1.5 p-2.5 rounded-full hover:bg-black/5 hover:scale-105 active:scale-[0.97] transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] focus-visible:ring-2 focus-visible:ring-[#C9A96E] outline-none"
             >
               <div className="relative w-[18px] h-[18px] flex items-center justify-center">
                 <span className={`absolute block h-[1.5px] w-[18px] bg-current rounded-full transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] ${menuOpen ? "rotate-45 translate-y-0" : "-translate-y-[5px]"}`} />
@@ -557,7 +575,7 @@ export default function Home() {
 
           <div className="mt-8 grid grid-cols-2 md:grid-cols-4 gap-4 sm:gap-5">
             {["Unstitched", "Ready to Wear", "Men", "Beauty"].map((cat) => (
-              <CategoryBanner key={cat} name={cat} imageId={categoryImages[cat] || 25} />
+              <CategoryBanner key={cat} name={cat} imageUrl={categoryImageUrls[cat] || categoryImageUrls["Ready to Wear"]} />
             ))}
           </div>
         </div>

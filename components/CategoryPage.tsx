@@ -101,7 +101,7 @@ function IconCart({ count }: { count: number }) {
     <Link
       href="/cart"
       aria-label={`View cart${count > 0 ? `, ${count} item${count !== 1 ? "s" : ""}` : ""}`}
-      className="relative p-2 rounded-full hover:bg-black/5 transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] focus-visible:ring-2 focus-visible:ring-[#C9A96E] outline-none"
+      className="relative p-2.5 rounded-full hover:bg-black/5 hover:scale-105 active:scale-[0.97] transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] focus-visible:ring-2 focus-visible:ring-[#C9A96E] outline-none"
     >
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.2} strokeLinecap="round" strokeLinejoin="round" className="w-[18px] h-[18px]" aria-hidden="true">
         <path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z" />
@@ -109,7 +109,7 @@ function IconCart({ count }: { count: number }) {
         <path d="M16 10a4 4 0 01-8 0" />
       </svg>
       {count > 0 && (
-        <span className="absolute -top-1 -right-1 flex items-center justify-center w-[18px] h-[18px] rounded-full bg-[#9B2C2C] text-white text-[10px] font-bold">
+        <span className="absolute -top-1.5 -right-1.5 flex items-center justify-center w-[19px] h-[19px] rounded-full bg-[#9B2C2C] text-white text-[10px] font-bold shadow-[0_2px_8px_rgba(155,44,44,0.3)]">
           {count}
         </span>
       )}
@@ -120,7 +120,7 @@ function IconCart({ count }: { count: number }) {
 /** User/profile icon button. No functionality yet — placeholder for auth. */
 function IconUser() {
   return (
-    <button type="button" aria-label="User account" className="p-2 rounded-full hover:bg-black/5 transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] focus-visible:ring-2 focus-visible:ring-[#C9A96E] outline-none">
+    <button type="button" aria-label="User account" className="p-2.5 rounded-full hover:bg-black/5 hover:scale-105 active:scale-[0.97] transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] focus-visible:ring-2 focus-visible:ring-[#C9A96E] outline-none">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.2} strokeLinecap="round" strokeLinejoin="round" className="w-[18px] h-[18px]" aria-hidden="true">
         <circle cx="12" cy="8" r="5" />
         <path d="M20 21a8 8 0 00-16 0" />
@@ -339,35 +339,54 @@ export default function CategoryPage({
       </div>
 
       {/* ======================== STICKY NAV ======================== */}
+      {/* Premium glassmorphism nav with hover underline effects on links. */}
       <nav className="sticky top-0 z-40 flex justify-center px-4" aria-label="Main navigation">
-        <div className="flex items-center justify-between w-full max-w-6xl px-4 sm:px-6 h-16 bg-white/90 backdrop-blur-xl border-b border-black/5 shadow-sm">
+        <div className="flex items-center justify-between w-full max-w-6xl px-4 sm:px-8 h-16 md:h-[72px] bg-white/70 backdrop-blur-2xl border-b border-white/20 shadow-[0_4px_30px_rgba(0,0,0,0.04)]">
           {/* Brand logo — links to home */}
           <Link
             href="/"
-            className={`text-lg font-bold tracking-tight text-[#1A1A1A] transition-all duration-500 ${menuOpen ? "opacity-0 pointer-events-none" : ""}`}
+            className={`text-xl font-bold tracking-[-0.02em] text-[#1A1A1A] transition-all duration-500 ${menuOpen ? "opacity-0 pointer-events-none" : ""} hover:opacity-80`}
             tabIndex={menuOpen ? -1 : 0}
           >
             <span className="text-[#9B2C2C]">Rang</span>kar
           </Link>
 
-          {/* Desktop nav links */}
-          <div className="hidden md:flex items-center gap-7 text-[12px] font-medium uppercase tracking-[0.12em] text-zinc-500">
-            <Link href="/" className="transition-colors duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] hover:text-[#1A1A1A]" tabIndex={menuOpen ? -1 : 0}>Home</Link>
-            <Link href="/sale" className={`transition-colors duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] hover:text-[#C9A96E] ${isSale ? "text-[#9B2C2C]" : "text-zinc-500 hover:text-[#1A1A1A]"}`} tabIndex={menuOpen ? -1 : 0}>Sale</Link>
-            <Link href="/unstitched" className="transition-colors duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] hover:text-[#1A1A1A]" tabIndex={menuOpen ? -1 : 0}>Unstitched</Link>
-            <Link href="/ready-to-wear" className="transition-colors duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] hover:text-[#1A1A1A]" tabIndex={menuOpen ? -1 : 0}>Ready to Wear</Link>
-            <Link href="/men" className="transition-colors duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] hover:text-[#1A1A1A]" tabIndex={menuOpen ? -1 : 0}>Men</Link>
-            <Link href="/beauty" className="transition-colors duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] hover:text-[#1A1A1A]" tabIndex={menuOpen ? -1 : 0}>Beauty</Link>
+          {/* Desktop nav links — refined spacing + hover underline animation */}
+          <div className="hidden md:flex items-center gap-8 text-[11px] font-semibold uppercase tracking-[0.15em] text-zinc-500">
+            <Link
+              href="/"
+              tabIndex={menuOpen ? -1 : 0}
+              className="relative text-zinc-500 transition-colors duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] hover:text-[#1A1A1A] after:absolute after:left-0 after:-bottom-[3px] after:w-0 after:h-[1.5px] after:bg-current after:rounded-full after:transition-all after:duration-500 hover:after:w-full"
+            >
+              Home
+            </Link>
+            <Link
+              href="/sale"
+              className={`relative transition-colors duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] hover:text-[#C9A96E] after:absolute after:left-0 after:-bottom-[3px] after:h-[1.5px] after:bg-current after:rounded-full after:transition-all after:duration-500 ${isSale ? "text-[#9B2C2C] after:w-full" : "text-zinc-500 hover:text-[#1A1A1A] after:w-0 hover:after:w-full"}`}
+              tabIndex={menuOpen ? -1 : 0}
+            >
+              Sale
+            </Link>
+            {["Unstitched", "Ready to Wear", "Men", "Beauty"].map((label) => (
+              <Link
+                key={label}
+                href={`/${label.toLowerCase().replace(/\s+/g, "-")}`}
+                tabIndex={menuOpen ? -1 : 0}
+                className="relative text-zinc-500 transition-colors duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] hover:text-[#1A1A1A] after:absolute after:left-0 after:-bottom-[3px] after:w-0 after:h-[1.5px] after:bg-current after:rounded-full after:transition-all after:duration-500 hover:after:w-full"
+              >
+                {label}
+              </Link>
+            ))}
           </div>
 
-          {/* Right-side icons: search, cart, user, hamburger */}
-          <div className="flex items-center gap-0.5">
+          {/* Right-side icons: search, cart, user, hamburger — enhanced hover */}
+          <div className="flex items-center gap-1">
             {/* Search toggle */}
             <button
               type="button"
               aria-label="Search products"
               onClick={() => setSearchOpen(!searchOpen)}
-              className="p-2 rounded-full hover:bg-black/5 transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] focus-visible:ring-2 focus-visible:ring-[#C9A96E] outline-none"
+              className="p-2.5 rounded-full hover:bg-black/5 hover:scale-105 active:scale-[0.97] transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] focus-visible:ring-2 focus-visible:ring-[#C9A96E] outline-none"
               tabIndex={menuOpen ? -1 : 0}
             >
               <IconSearch />
@@ -381,7 +400,7 @@ export default function CategoryPage({
               aria-label={menuOpen ? "Close menu" : "Open menu"}
               aria-expanded={menuOpen}
               onClick={() => setMenuOpen(!menuOpen)}
-              className="relative ml-1 p-2.5 rounded-full hover:bg-black/5 transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] focus-visible:ring-2 focus-visible:ring-[#C9A96E] outline-none"
+              className="relative ml-1.5 p-2.5 rounded-full hover:bg-black/5 hover:scale-105 active:scale-[0.97] transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] focus-visible:ring-2 focus-visible:ring-[#C9A96E] outline-none"
             >
               <div className="relative w-[18px] h-[18px] flex items-center justify-center">
                 <span className={`absolute block h-[1.5px] w-[18px] bg-current rounded-full transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] ${menuOpen ? "rotate-45 translate-y-0" : "-translate-y-[5px]"}`} />
