@@ -17,6 +17,7 @@ import { useState, useCallback, useEffect, useRef, useMemo } from "react";
 import { products, formatPKR } from "@/app/lib/data";
 import type { Product } from "@/app/lib/data";
 import { useCart } from "@/app/context/cart";
+import { useSearch } from "@/app/context/search";
 
 // ====================== HOOK: SCROLL REVEAL ======================
 /**
@@ -252,6 +253,7 @@ export default function CategoryPage({
   const [menuOpen, setMenuOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const searchRef = useRef<HTMLInputElement>(null);
+  const { searchTerm, setSearchTerm } = useSearch();
 
   // -------- Toast helper --------
   const showToast = useCallback((msg: string) => {
@@ -269,18 +271,24 @@ export default function CategoryPage({
     [addToCartCtx, showToast],
   );
 
-  // -------- Filter products based on props --------
-  // If isSale → only products with isSale === true
-  // If category → only products with matching category
-  // Otherwise → all products (fallback)
-  const filteredProducts = useMemo(
-    () => products.filter((p) => {
+  // -------- Filter products based on props + search term --------
+  // Applies category/isSale filter first, then narrows by search query.
+  // Search matches product name, category, and description (case-insensitive).
+  const filteredProducts = useMemo(() => {
+    const byFilter = products.filter((p) => {
       if (isSale) return p.isSale === true;
       if (category) return p.category === category;
       return true;
-    }),
-    [category, isSale],
-  );
+    });
+    if (!searchTerm.trim()) return byFilter;
+    const q = searchTerm.trim().toLowerCase();
+    return byFilter.filter(
+      (p) =>
+        p.name.toLowerCase().includes(q) ||
+        p.category.toLowerCase().includes(q) ||
+        (p.description && p.description.toLowerCase().includes(q)),
+    );
+  }, [category, isSale, searchTerm]);
 
   // -------- Close mobile menu on Escape --------
   useEffect(() => {
@@ -386,7 +394,9 @@ export default function CategoryPage({
       </nav>
 
       {/* ======================== SEARCH OVERLAY ======================== */}
-      {/* TODO: Wire this up to actually filter products on the page */}
+      {/* Filters the product grid in real-time as the user types.
+          Uses SearchContext so the term persists across page navigation
+          and the Home page shares the same search state. */}
       <div
         className={`fixed inset-0 z-30 flex items-start justify-center pt-24 sm:pt-28 px-4 transition-all duration-700 ease-[cubic-bezier(0.32,0.72,0,1)] ${
           searchOpen ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"
@@ -396,18 +406,46 @@ export default function CategoryPage({
         aria-label="Search"
       >
         <div className="w-full max-w-xl" onClick={(e) => e.stopPropagation()}>
-          <div className="bg-white rounded-2xl ring-1 ring-black/10 shadow-xl overflow-hidden">
+          <div className="bg-white rounded-2xl ring-1 ring-black/10 shadow-xl overflow-hidden flex items-center">
+            {/* Search icon */}
+            <span className="pl-5 text-zinc-400 shrink-0">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.2} strokeLinecap="round" strokeLinejoin="round" className="w-[18px] h-[18px]" aria-hidden="true">
+                <circle cx="11" cy="11" r="8" />
+                <path d="M21 21l-4.35-4.35" />
+              </svg>
+            </span>
             <input
               ref={searchRef}
               type="search"
-              name="search"
               autoComplete="off"
               spellCheck={false}
               placeholder="Search products\u2026"
               aria-label="Search products"
-              className="w-full bg-transparent px-6 py-4 text-sm text-[#1A1A1A] placeholder-zinc-400 outline-none"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full bg-transparent px-4 py-4 text-sm text-[#1A1A1A] placeholder-zinc-400 outline-none"
             />
+            {/* Clear (X) button — only visible when there is text */}
+            {searchTerm && (
+              <button
+                type="button"
+                aria-label="Clear search"
+                onClick={() => setSearchTerm("")}
+                className="mr-2 p-1.5 rounded-full hover:bg-black/5 transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] focus-visible:ring-2 focus-visible:ring-[#C9A96E] outline-none"
+              >
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.2} strokeLinecap="round" strokeLinejoin="round" className="w-[18px] h-[18px] text-zinc-400" aria-hidden="true">
+                  <path d="M18 6L6 18" />
+                  <path d="M6 6l12 12" />
+                </svg>
+              </button>
+            )}
           </div>
+          {/* Results hint shown below the search bar */}
+          {searchTerm && (
+            <p className="mt-2 text-xs text-zinc-500 px-1">
+              {filteredProducts.length} product{filteredProducts.length !== 1 ? "s" : ""} found
+            </p>
+          )}
         </div>
         <button type="button" aria-label="Close search" className="absolute inset-0 -z-10" onClick={() => setSearchOpen(false)} />
       </div>
@@ -509,7 +547,7 @@ export default function CategoryPage({
               ))}
             </div>
           ) : (
-            // Empty state — shown when no products match the filter
+            // Empty state — shown when no products match the filters
             <div className="text-center py-20">
               <div className="mx-auto w-16 h-16 rounded-full bg-[#F5F0EB] flex items-center justify-center mb-4">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1} strokeLinecap="round" strokeLinejoin="round" className="w-7 h-7 text-zinc-300" aria-hidden="true">
@@ -517,7 +555,11 @@ export default function CategoryPage({
                   <path d="M21 21l-4.35-4.35" />
                 </svg>
               </div>
-              <p className="text-zinc-400 text-sm">No products found in this category.</p>
+              <p className="text-zinc-400 text-sm">
+                {searchTerm.trim()
+                  ? `No products found matching "${searchTerm.trim()}"`
+                  : "No products found in this category."}
+              </p>
               <Link
                 href="/"
                 className="group mt-4 inline-flex items-center gap-2 rounded-full bg-[#1A1A1A] px-6 py-3 text-xs font-semibold text-white transition-all duration-700 ease-[cubic-bezier(0.32,0.72,0,1)] hover:bg-[#9B2C2C] focus-visible:ring-2 focus-visible:ring-[#C9A96E] outline-none active:scale-[0.98]"

@@ -39,7 +39,7 @@ const seedUrl = (name: string) =>
 export const products: Product[] = [
   // ---- Men ----
   { id: 1, name: "Khaddar Kurta Shalwar", price: 4490, originalPrice: 6490, category: "Men", rating: 4.5, image: "https://i.pinimg.com/736x/88/9b/33/889b33230d0307df9951e785f2fadef0.jpg", isSale: true, description: "Premium quality khaddar fabric kurta shalwar set. Breathable, durable, and perfect for casual wear. Features a comfortable straight cut with embroidered neckline." },
-  { id: 5, name: "Cotton Shalwar Kameez", price: 3290, originalPrice: 4990, category: "Men", rating: 4.4, image: seedUrl("cotton-shalwar-kameez"), isSale: true, description: "Pure cotton shalwar kameez for everyday comfort. Soft, breathable, and tailored for a perfect fit. Available in multiple colors." },
+  { id: 5, name: "Cotton Shalwar Kameez", price: 3290, originalPrice: 4990, category: "Men", rating: 4.4, image:"https://i.pinimg.com/736x/2c/11/c6/2c11c68ae141027a1f2993e278c5dbab.jpg", isSale: true, description: "Pure cotton shalwar kameez for everyday comfort. Soft, breathable, and tailored for a perfect fit. Available in multiple colors." },
   { id: 12, name: "Karakoram Jacket", price: 6490, originalPrice: 8490, category: "Men", rating: 4.6, image: seedUrl("karakoram-jacket"), description: "Inspired by the rugged Karakoram range. Water-resistant outer shell with warm inner lining. Perfect for northern winters." },
 
   // ---- Unstitched ----

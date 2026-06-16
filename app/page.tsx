@@ -23,6 +23,7 @@ import { useState, useCallback, useEffect, useRef, useMemo } from "react";
 import { products, categories, formatPKR, categoryImages } from "@/app/lib/data";
 import type { Product } from "@/app/lib/data";
 import { useCart } from "@/app/context/cart";
+import { useSearch } from "@/app/context/search";
 
 // ====================== HOOK: SCROLL REVEAL ======================
 /**
@@ -267,6 +268,7 @@ export default function Home() {
   const [searchOpen, setSearchOpen] = useState(false);
   const [activeCategory, setActiveCategory] = useState("All");
   const searchRef = useRef<HTMLInputElement>(null);
+  const { searchTerm, setSearchTerm } = useSearch();
 
   // -------- Toast --------
   const showToast = useCallback((msg: string) => {
@@ -283,11 +285,19 @@ export default function Home() {
     [addToCartCtx, showToast],
   );
 
-  // -------- Filter products by selected category chip --------
-  const filteredProducts = useMemo(
-    () => (activeCategory === "All" ? products : products.filter((p) => p.category === activeCategory)),
-    [activeCategory],
-  );
+  // -------- Filter products by selected category chip + search term --------
+  // Search matches product name, category, and description (case-insensitive).
+  const filteredProducts = useMemo(() => {
+    const byCategory = activeCategory === "All" ? products : products.filter((p) => p.category === activeCategory);
+    if (!searchTerm.trim()) return byCategory;
+    const q = searchTerm.trim().toLowerCase();
+    return byCategory.filter(
+      (p) =>
+        p.name.toLowerCase().includes(q) ||
+        p.category.toLowerCase().includes(q) ||
+        (p.description && p.description.toLowerCase().includes(q)),
+    );
+  }, [activeCategory, searchTerm]);
 
   // -------- Close menu on Escape --------
   useEffect(() => {
@@ -393,7 +403,9 @@ export default function Home() {
       </nav>
 
       {/* ======================== SEARCH OVERLAY ======================== */}
-      {/* TODO: Wire to filtered product search */}
+      {/* Filters the product grid in real-time as the user types.
+          The search term is stored in SearchContext so it survives overlay close
+          and works on category pages too. */}
       <div
         className={`fixed inset-0 z-30 flex items-start justify-center pt-24 sm:pt-28 px-4 transition-all duration-700 ease-[cubic-bezier(0.32,0.72,0,1)] ${
           searchOpen ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"
@@ -403,7 +415,14 @@ export default function Home() {
         aria-label="Search"
       >
         <div className="w-full max-w-xl" onClick={(e) => e.stopPropagation()}>
-          <div className="bg-white rounded-2xl ring-1 ring-black/10 shadow-xl overflow-hidden">
+          <div className="bg-white rounded-2xl ring-1 ring-black/10 shadow-xl overflow-hidden flex items-center">
+            {/* Search icon */}
+            <span className="pl-5 text-zinc-400 shrink-0">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.2} strokeLinecap="round" strokeLinejoin="round" className="w-[18px] h-[18px]" aria-hidden="true">
+                <circle cx="11" cy="11" r="8" />
+                <path d="M21 21l-4.35-4.35" />
+              </svg>
+            </span>
             <input
               ref={searchRef}
               type="search"
@@ -411,10 +430,33 @@ export default function Home() {
               spellCheck={false}
               placeholder="Search products\u2026"
               aria-label="Search products"
-              className="w-full bg-transparent px-6 py-4 text-sm text-[#1A1A1A] placeholder-zinc-400 outline-none"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full bg-transparent px-4 py-4 text-sm text-[#1A1A1A] placeholder-zinc-400 outline-none"
             />
+            {/* Clear (X) button — only visible when there is text */}
+            {searchTerm && (
+              <button
+                type="button"
+                aria-label="Clear search"
+                onClick={() => setSearchTerm("")}
+                className="mr-2 p-1.5 rounded-full hover:bg-black/5 transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] focus-visible:ring-2 focus-visible:ring-[#C9A96E] outline-none"
+              >
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.2} strokeLinecap="round" strokeLinejoin="round" className="w-[18px] h-[18px] text-zinc-400" aria-hidden="true">
+                  <path d="M18 6L6 18" />
+                  <path d="M6 6l12 12" />
+                </svg>
+              </button>
+            )}
           </div>
+          {/* Results hint */}
+          {searchTerm && (
+            <p className="mt-2 text-xs text-zinc-500 px-1">
+              {filteredProducts.length} product{filteredProducts.length !== 1 ? "s" : ""} found
+            </p>
+          )}
         </div>
+        {/* Backdrop — closes search overlay */}
         <button type="button" aria-label="Close search" className="absolute inset-0 -z-10" onClick={() => setSearchOpen(false)} />
       </div>
 
@@ -600,7 +642,26 @@ export default function Home() {
 
           {filteredProducts.length === 0 && (
             <div className="text-center py-20">
-              <p className="text-zinc-400 text-sm">No products found in this category.</p>
+              <div className="mx-auto w-14 h-14 rounded-full bg-[#F5F0EB] flex items-center justify-center mb-4">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1} strokeLinecap="round" strokeLinejoin="round" className="w-6 h-6 text-zinc-300" aria-hidden="true">
+                  <circle cx="11" cy="11" r="8" />
+                  <path d="M21 21l-4.35-4.35" />
+                </svg>
+              </div>
+              <p className="text-zinc-400 text-sm">
+                {searchTerm.trim()
+                  ? `No products found matching "${searchTerm.trim()}"`
+                  : "No products found in this category."}
+              </p>
+              {searchTerm.trim() && (
+                <button
+                  type="button"
+                  onClick={() => setSearchTerm("")}
+                  className="mt-4 inline-flex items-center gap-2 rounded-full bg-[#1A1A1A] px-6 py-3 text-xs font-semibold text-white transition-all duration-700 ease-[cubic-bezier(0.32,0.72,0,1)] hover:bg-[#9B2C2C] focus-visible:ring-2 focus-visible:ring-[#C9A96E] outline-none active:scale-[0.98]"
+                >
+                  Clear Search
+                </button>
+              )}
             </div>
           )}
         </div>
