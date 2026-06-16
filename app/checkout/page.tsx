@@ -1,3 +1,13 @@
+// =============================================================================
+// CHECKOUT PAGE — /checkout
+// =============================================================================
+// 7-field shipping form + sticky order summary sidebar. On submit, validates
+// the form, calls POST /api/send-order (Resend), clears the cart, and shows
+// a success modal with the order number (e.g. RKR-XXXXXXXX).
+//
+// Redirects to the cart empty state if there are no items.
+// =============================================================================
+
 "use client";
 
 import Link from "next/link";
@@ -5,6 +15,8 @@ import Image from "next/image";
 import { useState, useMemo } from "react";
 import { products, formatPKR } from "@/app/lib/data";
 import { useCart } from "@/app/context/cart";
+
+// ====================== TYPES ======================
 
 interface FormData {
   fullName: string;
@@ -25,6 +37,8 @@ interface FormErrors {
   zip?: string;
 }
 
+// ====================== ORDER NUMBER GENERATION ======================
+/** Generates a random 8-character alphanumeric order ID prefixed with "RKR-". */
 function generateOrderNumber() {
   const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
   let result = "RKR-";
@@ -34,6 +48,11 @@ function generateOrderNumber() {
   return result;
 }
 
+// ====================== REUSABLE INPUT FIELD ======================
+/**
+ * Renders a labeled input with validation error state.
+ * Uses `aria-invalid` and `aria-describedby` for accessibility.
+ */
 function InputField({
   label,
   id,
@@ -83,6 +102,11 @@ function InputField({
   );
 }
 
+// ====================== SUCCESS MODAL ======================
+/**
+ * Overlay shown after a successful order. Displays the order number
+ * and a "Continue Shopping" link that navigates to the homepage.
+ */
 function SuccessModal({
   orderNumber,
   onClose,
@@ -98,10 +122,11 @@ function SuccessModal({
         aria-modal="true"
         aria-labelledby="success-title"
       >
-        <div className=" mx-auto w-16 h-16 rounded-full bg-[#1A1A1A] flex items-center justify-center mb-5">
+        {/* Checkmark icon */}
+        <div className="mx-auto w-16 h-16 rounded-full bg-[#1A1A1A] flex items-center justify-center mb-5">
           <svg viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round" className="w-7 h-7" aria-hidden="true">
             <path d="M20 6L9 17l-5-5" />
-          </svg>   
+          </svg>
         </div>
 
         <h2 id="success-title" className="text-2xl font-bold tracking-[-0.03em] text-[#1A1A1A]">
@@ -111,6 +136,7 @@ function SuccessModal({
           Your order has been placed successfully.
         </p>
 
+        {/* Order number card */}
         <div className="mt-6 bg-[#F5F0EB] rounded-2xl p-5">
           <p className="text-[10px] uppercase tracking-[0.2em] font-semibold text-zinc-400 mb-1">
             Order Number
@@ -142,6 +168,8 @@ function SuccessModal({
   );
 }
 
+// ====================== PAGE ======================
+
 export default function CheckoutPage() {
   const { cart, cartCount, clearCart } = useCart();
   const [form, setForm] = useState<FormData>({
@@ -158,6 +186,7 @@ export default function CheckoutPage() {
   const [sendError, setSendError] = useState<string | null>(null);
   const [successOrder, setSuccessOrder] = useState<string | null>(null);
 
+  // -------- Derive flat cart items array --------
   const cartItems = useMemo(
     () =>
       Object.entries(cart)
@@ -166,6 +195,7 @@ export default function CheckoutPage() {
     [cart],
   );
 
+  // -------- Compute subtotal --------
   const subtotal = useMemo(
     () =>
       cartItems.reduce((sum, item) => {
@@ -175,6 +205,7 @@ export default function CheckoutPage() {
     [cartItems],
   );
 
+  // -------- Update a single form field and clear its error --------
   function updateField(field: keyof FormData, value: string) {
     setForm((prev) => ({ ...prev, [field]: value }));
     if (errors[field as keyof FormErrors]) {
@@ -186,6 +217,7 @@ export default function CheckoutPage() {
     }
   }
 
+  // -------- Validate all required fields --------
   function validate(): boolean {
     const newErrors: FormErrors = {};
 
@@ -205,11 +237,13 @@ export default function CheckoutPage() {
     return Object.keys(newErrors).length === 0;
   }
 
+  // -------- Submit order: validate, show spinner, POST to API, show modal --------
   async function handlePlaceOrder() {
     if (!validate()) return;
     setIsPlacing(true);
     setSendError(null);
 
+    // Brief artificial delay so the user sees the spinner
     await new Promise((resolve) => setTimeout(resolve, 1800));
 
     const orderNumber = generateOrderNumber();
@@ -237,7 +271,7 @@ export default function CheckoutPage() {
               name: product.name,
               price: product.price,
               quantity: item.quantity,
-              imageUrl: `https://picsum.photos/id/${product.imageId}/100/120`,
+              imageUrl: product.image,
             };
           }),
           subtotal,
@@ -250,20 +284,23 @@ export default function CheckoutPage() {
         setSendError(err.error || "Failed to send confirmation email");
       }
     } catch {
+      // If the API call fails, the order is still recorded locally
       setSendError("Could not send order email. Your order was still placed.");
     }
 
+    // Clear cart and show success regardless of email send result
     clearCart();
     setIsPlacing(false);
     setSuccessOrder(orderNumber);
   }
 
+  // If cart is empty (and no success modal is showing), show the empty state
   const isEmpty = cartItems.length === 0 && !successOrder;
 
   return (
     <div className="min-h-screen bg-[#FDFBF7] text-[#1A1A1A] font-sans antialiased selection:bg-[#C9A96E]/30">
 
-      {/* Grain overlay */}
+      {/* ======================== GRAIN OVERLAY ======================== */}
       <div
         className="fixed inset-0 z-[60] pointer-events-none opacity-[0.015]"
         style={{
@@ -273,7 +310,8 @@ export default function CheckoutPage() {
         aria-hidden="true"
       />
 
-      {/* Nav */}
+      {/* ======================== NAV ======================== */}
+      {/* Sticky top bar with full category links (same pattern as cart page). */}
       <nav className="sticky top-0 z-40 flex justify-center px-4">
         <div className="flex items-center justify-between w-full max-w-6xl px-4 sm:px-6 h-16 bg-white/90 backdrop-blur-xl border-b border-black/5 shadow-sm">
           <Link href="/" className="text-lg font-bold tracking-tight text-[#1A1A1A]">
@@ -281,24 +319,12 @@ export default function CheckoutPage() {
           </Link>
 
           <div className="hidden md:flex items-center gap-7 text-[12px] font-medium uppercase tracking-[0.12em] text-zinc-500">
-            <Link href="/" className="transition-colors duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] hover:text-[#1A1A1A]">
-              Home
-            </Link>
-            <Link href="/sale" className="text-[#9B2C2C] transition-colors duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] hover:text-[#C9A96E]">
-              Sale
-            </Link>
-            <Link href="/unstitched" className="transition-colors duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] hover:text-[#1A1A1A]">
-              Unstitched
-            </Link>
-            <Link href="/ready-to-wear" className="transition-colors duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] hover:text-[#1A1A1A]">
-              Ready to Wear
-            </Link>
-            <Link href="/men" className="transition-colors duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] hover:text-[#1A1A1A]">
-              Men
-            </Link>
-            <Link href="/beauty" className="transition-colors duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] hover:text-[#1A1A1A]">
-              Beauty
-            </Link>
+            <Link href="/" className="transition-colors duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] hover:text-[#1A1A1A]">Home</Link>
+            <Link href="/sale" className="text-[#9B2C2C] transition-colors duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] hover:text-[#C9A96E]">Sale</Link>
+            <Link href="/unstitched" className="transition-colors duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] hover:text-[#1A1A1A]">Unstitched</Link>
+            <Link href="/ready-to-wear" className="transition-colors duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] hover:text-[#1A1A1A]">Ready to Wear</Link>
+            <Link href="/men" className="transition-colors duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] hover:text-[#1A1A1A]">Men</Link>
+            <Link href="/beauty" className="transition-colors duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] hover:text-[#1A1A1A]">Beauty</Link>
           </div>
 
           <div className="flex items-center gap-2">
@@ -318,12 +344,12 @@ export default function CheckoutPage() {
         </div>
       </nav>
 
-      {/* Content */}
+      {/* ======================== MAIN CONTENT ======================== */}
       <section className="px-4 sm:px-6 lg:px-8 py-10 sm:py-16">
         <div className="mx-auto w-full max-w-6xl">
 
           {isEmpty ? (
-            /* Empty state */
+            /* -------- EMPTY CART STATE -------- */
             <div className="text-center py-20 sm:py-32 max-w-md mx-auto">
               <div className="mx-auto w-20 h-20 rounded-full bg-[#F5F0EB] flex items-center justify-center mb-6">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1} strokeLinecap="round" strokeLinejoin="round" className="w-9 h-9 text-zinc-300" aria-hidden="true">
@@ -351,7 +377,7 @@ export default function CheckoutPage() {
             </div>
           ) : (
             <>
-              {/* Header */}
+              {/* -------- HEADER -------- */}
               <div className="flex items-center justify-between mb-8">
                 <div>
                   <span className="inline-block rounded-full px-3 py-1 text-[10px] uppercase tracking-[0.25em] font-medium bg-[#C9A96E]/10 text-[#9B7E3A] mb-2">
@@ -369,8 +395,10 @@ export default function CheckoutPage() {
                 </Link>
               </div>
 
+              {/* -------- TWO-COLUMN: form + summary -------- */}
               <div className="flex flex-col lg:flex-row gap-8 lg:gap-12">
-                {/* Left column – Shipping Form */}
+
+                {/* -------- LEFT: SHIPPING FORM -------- */}
                 <div className="flex-1 min-w-0">
                   <div className="bg-white rounded-2xl ring-1 ring-black/5 shadow-[0_2px_20px_rgba(0,0,0,0.04)] p-6 sm:p-8">
                     <h2 className="text-[11px] uppercase tracking-[0.2em] font-semibold text-zinc-400 mb-6 flex items-center gap-2.5">
@@ -380,6 +408,7 @@ export default function CheckoutPage() {
                       Shipping Information
                     </h2>
 
+                    {/* Form is wrapped in a submit handler but uses button click for placement */}
                     <form
                       onSubmit={(e) => {
                         e.preventDefault();
@@ -388,6 +417,7 @@ export default function CheckoutPage() {
                       noValidate
                       className="space-y-5"
                     >
+                      {/* Name + Phone row */}
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-5">
                         <InputField
                           label="Full Name"
@@ -410,6 +440,7 @@ export default function CheckoutPage() {
                         />
                       </div>
 
+                      {/* Street address (full width) */}
                       <InputField
                         label="Street Address"
                         id="street"
@@ -420,6 +451,7 @@ export default function CheckoutPage() {
                         required
                       />
 
+                      {/* City + State + ZIP row */}
                       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-5">
                         <InputField
                           label="City"
@@ -450,6 +482,7 @@ export default function CheckoutPage() {
                         />
                       </div>
 
+                      {/* Email (optional — not required for order but helpful for email receipt) */}
                       <InputField
                         label="Email (optional)"
                         id="email"
@@ -462,7 +495,7 @@ export default function CheckoutPage() {
                   </div>
                 </div>
 
-                {/* Right column – Order Summary */}
+                {/* -------- RIGHT: ORDER SUMMARY SIDEBAR -------- */}
                 <div className="w-full lg:w-96 shrink-0">
                   <div className="bg-white rounded-2xl ring-1 ring-black/5 shadow-[0_2px_20px_rgba(0,0,0,0.04)] p-6 sm:p-8 sticky top-24">
                     <h2 className="text-[11px] uppercase tracking-[0.2em] font-semibold text-zinc-400 mb-5 flex items-center gap-2.5">
@@ -474,7 +507,7 @@ export default function CheckoutPage() {
                       Order Summary
                     </h2>
 
-                    {/* Items */}
+                    {/* Line items (scrollable if many items) */}
                     <div className="space-y-3 mb-5 pb-5 border-b border-black/5 max-h-72 overflow-y-auto pr-1">
                       {cartItems.map((item) => {
                         const product = products.find((p) => p.id === item.id);
@@ -483,7 +516,7 @@ export default function CheckoutPage() {
                           <div key={item.id} className="flex items-center gap-3">
                             <div className="relative w-12 h-14 rounded-lg overflow-hidden bg-[#F5F0EB] shrink-0">
                               <Image
-                                src={`https://picsum.photos/id/${product.imageId}/100/120`}
+                                src={product.image}
                                 alt={product.name}
                                 fill
                                 sizes="48px"
@@ -506,7 +539,7 @@ export default function CheckoutPage() {
                       })}
                     </div>
 
-                    {/* Totals */}
+                    {/* Subtotal + shipping */}
                     <div className="space-y-3 text-sm">
                       <div className="flex items-center justify-between">
                         <span className="text-zinc-500">Subtotal ({cartCount} item{cartCount !== 1 ? "s" : ""})</span>
@@ -514,12 +547,14 @@ export default function CheckoutPage() {
                       </div>
                       <div className="flex items-center justify-between">
                         <span className="text-zinc-500">Shipping</span>
+                        {/* Free shipping threshold: orders over PKR 5,000 */}
                         <span className="font-medium text-emerald-600">
                           {subtotal >= 5000 ? "Free" : "Calculated at checkout"}
                         </span>
                       </div>
                     </div>
 
+                    {/* Total */}
                     <div className="mt-5 pt-5 border-t border-black/5">
                       <div className="flex items-center justify-between">
                         <span className="text-base font-semibold text-[#1A1A1A]">Total</span>
@@ -527,14 +562,14 @@ export default function CheckoutPage() {
                       </div>
                     </div>
 
-                    {/* Error */}
+                    {/* API error message (if email send fails) */}
                     {sendError && (
                       <div className="mt-4 p-3 rounded-xl bg-[#9B2C2C]/5 border border-[#9B2C2C]/20 text-xs text-[#9B2C2C] font-medium text-center">
                         {sendError}
                       </div>
                     )}
 
-                    {/* Place Order */}
+                    {/* Place Order button with loading spinner */}
                     <button
                       type="button"
                       onClick={handlePlaceOrder}
@@ -562,7 +597,7 @@ export default function CheckoutPage() {
                       )}
                     </button>
 
-                    {/* Secure indicator */}
+                    {/* Security reassurance */}
                     <div className="mt-4 flex items-center justify-center gap-2 text-[11px] text-zinc-400">
                       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.2} strokeLinecap="round" strokeLinejoin="round" className="w-3.5 h-3.5" aria-hidden="true">
                         <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
@@ -578,7 +613,7 @@ export default function CheckoutPage() {
         </div>
       </section>
 
-      {/* Success Modal */}
+      {/* ======================== SUCCESS MODAL ======================== */}
       {successOrder && (
         <SuccessModal
           orderNumber={successOrder}

@@ -1,3 +1,20 @@
+// =============================================================================
+// HOME PAGE (/) — MAIN STOREFRONT
+// =============================================================================
+// The primary landing page. Sections (top to bottom):
+//   1. Grain overlay (paper texture)
+//   2. Announcement bar
+//   3. Sticky nav (search, cart, user, hamburger)
+//   4. Search overlay
+//   5. Mobile menu overlay
+//   6. Editorial-split hero
+//   7. Category banner grid (4 categories)
+//   8. Sale promo strip
+//   9. Category chips + product grid (16 items, filterable)
+//  10. Features strip (4 trust indicators)
+//  11. Footer
+// =============================================================================
+
 "use client";
 
 import Link from "next/link";
@@ -7,6 +24,11 @@ import { products, categories, formatPKR, categoryImages } from "@/app/lib/data"
 import type { Product } from "@/app/lib/data";
 import { useCart } from "@/app/context/cart";
 
+// ====================== HOOK: SCROLL REVEAL ======================
+/**
+ * Triggers a one-time fade-in animation when element scrolls into view.
+ * @param threshold - % visible to trigger (default 0.08)
+ */
 function useScrollReveal(threshold = 0.08) {
   const ref = useRef<HTMLDivElement>(null);
   const [visible, setVisible] = useState(false);
@@ -30,6 +52,8 @@ function useScrollReveal(threshold = 0.08) {
   return { ref, visible };
 }
 
+// ====================== ANIMATED SECTION ======================
+/** Wraps content in a fade-in + slide-up + blur-in animation. */
 function AnimatedSection({ children, className = "" }: { children: React.ReactNode; className?: string }) {
   const { ref, visible } = useScrollReveal();
   return (
@@ -44,6 +68,7 @@ function AnimatedSection({ children, className = "" }: { children: React.ReactNo
   );
 }
 
+// ====================== STAR RATING ======================
 function Stars({ rating }: { rating: number }) {
   return (
     <span className="text-amber-600/70 text-xs tracking-[0.15em]" aria-label={`${rating} out of 5 stars`}>
@@ -53,6 +78,8 @@ function Stars({ rating }: { rating: number }) {
   );
 }
 
+// ====================== TOAST ======================
+/** Bottom-center floating notification. */
 function Toast({ message, visible }: { message: string; visible: boolean }) {
   return (
     <div
@@ -67,6 +94,9 @@ function Toast({ message, visible }: { message: string; visible: boolean }) {
   );
 }
 
+// ====================== NAV ICONS ======================
+
+/** Cart icon with badge — links to /cart. */
 function IconCart({ count }: { count: number }) {
   return (
     <Link
@@ -88,6 +118,7 @@ function IconCart({ count }: { count: number }) {
   );
 }
 
+/** User/profile icon — placeholder for auth. */
 function IconUser() {
   return (
     <button type="button" aria-label="User account" className="p-2 rounded-full hover:bg-black/5 transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] focus-visible:ring-2 focus-visible:ring-[#C9A96E] outline-none">
@@ -99,6 +130,7 @@ function IconUser() {
   );
 }
 
+/** Search icon. */
 function IconSearch() {
   return (
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.2} strokeLinecap="round" strokeLinejoin="round" className="w-[18px] h-[18px]" aria-hidden="true">
@@ -107,6 +139,10 @@ function IconSearch() {
     </svg>
   );
 }
+
+// ====================== PRODUCT CARD ======================
+// Note: This is duplicated in components/CategoryPage.tsx.
+// TODO: Extract into a shared components/ProductCard.tsx to eliminate duplication.
 
 function ProductCard({
   product,
@@ -130,13 +166,13 @@ function ProductCard({
       <div className="bg-white rounded-2xl overflow-hidden ring-1 ring-black/5 shadow-[0_2px_20px_rgba(0,0,0,0.04)] hover:shadow-[0_8px_40px_rgba(0,0,0,0.08)] transition-all duration-700 ease-[cubic-bezier(0.32,0.72,0,1)]">
         <div className="relative aspect-[4/5] overflow-hidden bg-[#F5F0EB]">
           <Image
-            src={`https://picsum.photos/id/${product.imageId}/400/500`}
+            src={product.image}
             alt={product.name}
             fill
             sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
             className="object-cover transition-all duration-700 ease-[cubic-bezier(0.32,0.72,0,1)] group-hover:scale-105"
             loading="lazy"
-          />  
+          />
           {product.isSale && (
             <span className="absolute top-3 left-3 bg-[#9B2C2C] text-white text-[10px] font-bold uppercase tracking-[0.1em] px-3 py-1 rounded-full">
               -{discount}%
@@ -182,6 +218,11 @@ function ProductCard({
   );
 }
 
+// ====================== CATEGORY BANNER ======================
+/**
+ * A single category tile for the "Shop by Category" section.
+ * imageId comes from the categoryImages map in data.ts (picsum IDs for hero banners).
+ */
 function CategoryBanner({ name, imageId }: { name: string; imageId: number }) {
   const { ref, visible } = useScrollReveal(0.1);
 
@@ -200,6 +241,7 @@ function CategoryBanner({ name, imageId }: { name: string; imageId: number }) {
         className="object-cover transition-all duration-700 ease-[cubic-bezier(0.32,0.72,0,1)] group-hover:scale-105"
         loading="lazy"
       />
+      {/* Dark gradient overlay for text readability */}
       <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/10 to-transparent" />
       <div className="absolute bottom-0 left-0 right-0 p-5 sm:p-6">
         <h3 className="text-lg sm:text-xl font-bold text-white">{name}</h3>
@@ -215,6 +257,8 @@ function CategoryBanner({ name, imageId }: { name: string; imageId: number }) {
   );
 }
 
+// ====================== MAIN HOME PAGE ======================
+
 export default function Home() {
   const { addToCart: addToCartCtx, cartCount } = useCart();
   const [toastMsg, setToastMsg] = useState("");
@@ -224,6 +268,7 @@ export default function Home() {
   const [activeCategory, setActiveCategory] = useState("All");
   const searchRef = useRef<HTMLInputElement>(null);
 
+  // -------- Toast --------
   const showToast = useCallback((msg: string) => {
     setToastMsg(msg);
     setToastVisible(true);
@@ -238,11 +283,13 @@ export default function Home() {
     [addToCartCtx, showToast],
   );
 
+  // -------- Filter products by selected category chip --------
   const filteredProducts = useMemo(
     () => (activeCategory === "All" ? products : products.filter((p) => p.category === activeCategory)),
     [activeCategory],
   );
 
+  // -------- Close menu on Escape --------
   useEffect(() => {
     if (!menuOpen) return;
     const handler = (e: KeyboardEvent) => {
@@ -252,11 +299,13 @@ export default function Home() {
     return () => window.removeEventListener("keydown", handler);
   }, [menuOpen]);
 
+  // -------- Lock body scroll when menu open --------
   useEffect(() => {
     document.body.style.overflow = menuOpen ? "hidden" : "";
     return () => { document.body.style.overflow = ""; };
   }, [menuOpen]);
 
+  // -------- Focus search on open --------
   useEffect(() => {
     if (searchOpen && searchRef.current) {
       searchRef.current.focus();
@@ -266,7 +315,8 @@ export default function Home() {
   return (
     <div className="relative min-h-screen bg-[#FDFBF7] text-[#1A1A1A] font-sans antialiased selection:bg-[#C9A96E]/30">
 
-      {/* Grain overlay for paper texture */}
+      {/* ======================== GRAIN OVERLAY ======================== */}
+      {/* Fine noise texture for a premium paper/canvas feel. */}
       <div
         className="fixed inset-0 z-[60] pointer-events-none opacity-[0.015]"
         style={{
@@ -276,7 +326,7 @@ export default function Home() {
         aria-hidden="true"
       />
 
-      {/* Announcement Bar */}
+      {/* ======================== ANNOUNCEMENT BAR ======================== */}
       <div className="relative z-50 bg-[#1A1A1A] text-white text-center text-[11px] sm:text-xs font-medium uppercase tracking-[0.15em] py-2.5 px-4">
         <span className="inline-flex items-center gap-2">
           <span className="w-1.5 h-1.5 rounded-full bg-[#C9A96E]" />
@@ -285,12 +335,14 @@ export default function Home() {
         </span>
       </div>
 
-      {/* Floating Nav Island */}
+      {/* ======================== FLOATING NAV ISLAND ======================== */}
+      {/* Sticky top nav with full category links, search, cart, user, hamburger. */}
       <nav
         className="sticky top-0 z-40 flex justify-center px-4 pt-0"
         aria-label="Main navigation"
       >
         <div className="flex items-center justify-between w-full max-w-6xl px-4 sm:px-6 h-16 bg-white/90 backdrop-blur-xl border-b border-black/5 shadow-sm">
+          {/* Brand */}
           <Link
             href="/"
             className={`text-lg font-bold tracking-tight text-[#1A1A1A] transition-all duration-500 ${menuOpen ? "opacity-0 pointer-events-none" : ""}`}
@@ -299,51 +351,17 @@ export default function Home() {
             <span className="text-[#9B2C2C]">Rang</span>kar
           </Link>
 
+          {/* Desktop nav links */}
           <div className="hidden md:flex items-center gap-7 text-[12px] font-medium uppercase tracking-[0.12em] text-zinc-500">
-            <Link
-              href="/"
-              className="text-[#1A1A1A] transition-colors duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] hover:text-[#C9A96E]"
-              tabIndex={menuOpen ? -1 : 0}
-            >
-              Home
-            </Link>
-            <Link
-              href="/sale"
-              className="text-[#9B2C2C] transition-colors duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] hover:text-[#C9A96E]"
-              tabIndex={menuOpen ? -1 : 0}
-            >
-              Sale
-            </Link>
-            <Link
-              href="/unstitched"
-              className="transition-colors duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] hover:text-[#1A1A1A]"
-              tabIndex={menuOpen ? -1 : 0}
-            >
-              Unstitched
-            </Link>
-            <Link
-              href="/ready-to-wear"
-              className="transition-colors duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] hover:text-[#1A1A1A]"
-              tabIndex={menuOpen ? -1 : 0}
-            >
-              Ready to Wear
-            </Link>
-            <Link
-              href="/men"
-              className="transition-colors duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] hover:text-[#1A1A1A]"
-              tabIndex={menuOpen ? -1 : 0}
-            >
-              Men
-            </Link>
-            <Link
-              href="/beauty"
-              className="transition-colors duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] hover:text-[#1A1A1A]"
-              tabIndex={menuOpen ? -1 : 0}
-            >
-              Beauty
-            </Link>
+            <Link href="/" tabIndex={menuOpen ? -1 : 0} className="text-[#1A1A1A] transition-colors duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] hover:text-[#C9A96E]">Home</Link>
+            <Link href="/sale" tabIndex={menuOpen ? -1 : 0} className="text-[#9B2C2C] transition-colors duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] hover:text-[#C9A96E]">Sale</Link>
+            <Link href="/unstitched" tabIndex={menuOpen ? -1 : 0} className="transition-colors duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] hover:text-[#1A1A1A]">Unstitched</Link>
+            <Link href="/ready-to-wear" tabIndex={menuOpen ? -1 : 0} className="transition-colors duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] hover:text-[#1A1A1A]">Ready to Wear</Link>
+            <Link href="/men" tabIndex={menuOpen ? -1 : 0} className="transition-colors duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] hover:text-[#1A1A1A]">Men</Link>
+            <Link href="/beauty" tabIndex={menuOpen ? -1 : 0} className="transition-colors duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] hover:text-[#1A1A1A]">Beauty</Link>
           </div>
 
+          {/* Right icons */}
           <div className="flex items-center gap-0.5">
             <button
               type="button"
@@ -356,7 +374,7 @@ export default function Home() {
             </button>
             <IconCart count={cartCount} />
             <IconUser />
-
+            {/* Hamburger */}
             <button
               type="button"
               aria-label={menuOpen ? "Close menu" : "Open menu"}
@@ -365,33 +383,20 @@ export default function Home() {
               className="relative ml-1 p-2.5 rounded-full hover:bg-black/5 transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] focus-visible:ring-2 focus-visible:ring-[#C9A96E] outline-none"
             >
               <div className="relative w-[18px] h-[18px] flex items-center justify-center">
-                <span
-                  className={`absolute block h-[1.5px] w-[18px] bg-current rounded-full transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] ${
-                    menuOpen ? "rotate-45 translate-y-0" : "-translate-y-[5px]"
-                  }`}
-                />
-                <span
-                  className={`absolute block h-[1.5px] w-[18px] bg-current rounded-full transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] ${
-                    menuOpen ? "opacity-0 scale-0" : "opacity-100 scale-100"
-                  }`}
-                />
-                <span
-                  className={`absolute block h-[1.5px] w-[18px] bg-current rounded-full transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] ${
-                    menuOpen ? "-rotate-45 translate-y-0" : "translate-y-[5px]"
-                  }`}
-                />
+                <span className={`absolute block h-[1.5px] w-[18px] bg-current rounded-full transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] ${menuOpen ? "rotate-45 translate-y-0" : "-translate-y-[5px]"}`} />
+                <span className={`absolute block h-[1.5px] w-[18px] bg-current rounded-full transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] ${menuOpen ? "opacity-0 scale-0" : "opacity-100 scale-100"}`} />
+                <span className={`absolute block h-[1.5px] w-[18px] bg-current rounded-full transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] ${menuOpen ? "-rotate-45 translate-y-0" : "translate-y-[5px]"}`} />
               </div>
             </button>
           </div>
         </div>
       </nav>
 
-      {/* Search overlay */}
+      {/* ======================== SEARCH OVERLAY ======================== */}
+      {/* TODO: Wire to filtered product search */}
       <div
         className={`fixed inset-0 z-30 flex items-start justify-center pt-24 sm:pt-28 px-4 transition-all duration-700 ease-[cubic-bezier(0.32,0.72,0,1)] ${
-          searchOpen
-            ? "opacity-100 pointer-events-auto"
-            : "opacity-0 pointer-events-none"
+          searchOpen ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"
         }`}
         role="dialog"
         aria-modal="true"
@@ -402,7 +407,6 @@ export default function Home() {
             <input
               ref={searchRef}
               type="search"
-              name="search"
               autoComplete="off"
               spellCheck={false}
               placeholder="Search products\u2026"
@@ -411,20 +415,14 @@ export default function Home() {
             />
           </div>
         </div>
-        <button
-          type="button"
-          aria-label="Close search"
-          className="absolute inset-0 -z-10"
-          onClick={() => setSearchOpen(false)}
-        />
+        <button type="button" aria-label="Close search" className="absolute inset-0 -z-10" onClick={() => setSearchOpen(false)} />
       </div>
 
-      {/* Mobile Menu Overlay */}
+      {/* ======================== MOBILE MENU ======================== */}
+      {/* Full-screen overlay with staggered link animation. */}
       <div
         className={`fixed inset-0 z-30 flex flex-col items-center justify-center gap-10 backdrop-blur-3xl bg-[#FDFBF7]/95 transition-all duration-700 ease-[cubic-bezier(0.32,0.72,0,1)] ${
-          menuOpen
-            ? "opacity-100 pointer-events-auto"
-            : "opacity-0 pointer-events-none"
+          menuOpen ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"
         }`}
         role="dialog"
         aria-modal="true"
@@ -436,9 +434,7 @@ export default function Home() {
             href={label === "Home" ? "/" : `/${label.toLowerCase().replace(/\s+/g, "-")}`}
             onClick={() => setMenuOpen(false)}
             className={`text-3xl sm:text-4xl font-bold tracking-tight text-[#1A1A1A] transition-all duration-700 ease-[cubic-bezier(0.32,0.72,0,1)] hover:text-[#C9A96E] ${
-              menuOpen
-                ? "translate-y-0 opacity-100"
-                : "translate-y-12 opacity-0"
+              menuOpen ? "translate-y-0 opacity-100" : "translate-y-12 opacity-0"
             }`}
             style={{ transitionDelay: menuOpen ? `${150 + i * 100}ms` : "0ms" }}
           >
@@ -447,52 +443,42 @@ export default function Home() {
         ))}
       </div>
 
-      {/* Hero — Editorial Split */}
+      {/* ======================== HERO — EDITORIAL SPLIT ======================== */}
       <section className="relative px-4 sm:px-6 lg:px-8 pt-12 pb-16 sm:pb-24">
         <div className="mx-auto w-full max-w-6xl">
           <div className="flex flex-col lg:flex-row lg:items-center gap-10 lg:gap-16">
+            {/* Left: Text */}
             <AnimatedSection className="flex-1 max-w-xl">
               <span className="inline-flex items-center gap-2 rounded-full bg-[#C9A96E]/10 border border-[#C9A96E]/20 px-4 py-1.5 text-[10px] uppercase tracking-[0.25em] font-semibold text-[#9B7E3A] mb-6">
                 <span className="w-1.5 h-1.5 rounded-full bg-[#C9A96E]" />
                 Summer Collection &apos;26
               </span>
               <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold tracking-[-0.04em] leading-[1.05] text-[#1A1A1A] text-pretty">
-                Tradition
-                <br />
-                <span className="text-[#C9A96E]">Reimagined</span>
-                <br />
-                for Today
+                Tradition<br /><span className="text-[#C9A96E]">Reimagined</span><br />for Today
               </h1>
               <p className="mt-5 text-base sm:text-lg leading-relaxed text-zinc-500 text-pretty max-w-md">
                 Discover premium unstitched fabrics, ready-to-wear ensembles, and timeless accessories crafted for the modern Pakistani wardrobe.
               </p>
               <div className="mt-8 flex items-center gap-4">
-                <a
-                  href="#products"
-                  className="group inline-flex items-center gap-3 rounded-full bg-[#1A1A1A] px-7 py-3.5 text-sm font-semibold text-white transition-all duration-700 ease-[cubic-bezier(0.32,0.72,0,1)] hover:bg-[#9B2C2C] focus-visible:ring-2 focus-visible:ring-[#C9A96E] outline-none active:scale-[0.98]"
-                >
+                <a href="#products" className="group inline-flex items-center gap-3 rounded-full bg-[#1A1A1A] px-7 py-3.5 text-sm font-semibold text-white transition-all duration-700 ease-[cubic-bezier(0.32,0.72,0,1)] hover:bg-[#9B2C2C] focus-visible:ring-2 focus-visible:ring-[#C9A96E] outline-none active:scale-[0.98]">
                   Shop Sale
                   <span className="w-7 h-7 rounded-full bg-white/10 flex items-center justify-center transition-all duration-700 ease-[cubic-bezier(0.32,0.72,0,1)] group-hover:translate-x-0.5">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round" className="w-3.5 h-3.5" aria-hidden="true">
-                      <path d="M5 12h14" />
-                      <path d="M12 5l7 7-7 7" />
+                      <path d="M5 12h14" /><path d="M12 5l7 7-7 7" />
                     </svg>
                   </span>
                 </a>
-                <button
-                  type="button"
-                  onClick={() => alert("Explore new arrivals")}
-                  className="group inline-flex items-center gap-2 rounded-full px-7 py-3.5 text-sm font-medium text-zinc-500 transition-all duration-700 ease-[cubic-bezier(0.32,0.72,0,1)] hover:text-[#1A1A1A] focus-visible:ring-2 focus-visible:ring-[#C9A96E] outline-none active:scale-[0.98]"
-                >
+                {/* TODO: Wire to real "New Arrivals" page */}
+                <button type="button" onClick={() => alert("Explore new arrivals")} className="group inline-flex items-center gap-2 rounded-full px-7 py-3.5 text-sm font-medium text-zinc-500 transition-all duration-700 ease-[cubic-bezier(0.32,0.72,0,1)] hover:text-[#1A1A1A] focus-visible:ring-2 focus-visible:ring-[#C9A96E] outline-none active:scale-[0.98]">
                   New Arrivals
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round" className="w-3.5 h-3.5 transition-transform duration-700 ease-[cubic-bezier(0.32,0.72,0,1)] group-hover:translate-x-0.5" aria-hidden="true">
-                    <path d="M5 12h14" />
-                    <path d="M12 5l7 7-7 7" />
+                    <path d="M5 12h14" /><path d="M12 5l7 7-7 7" />
                   </svg>
                 </button>
               </div>
             </AnimatedSection>
 
+            {/* Right: Hero image */}
             <div className="flex-1 relative">
               <div className="relative rounded-2xl overflow-hidden bg-[#F5F0EB] aspect-[4/5] sm:aspect-[3/4] lg:aspect-[4/5] max-w-lg mx-auto lg:mx-0 lg:ml-auto shadow-[0_20px_60px_rgba(0,0,0,0.08)]">
                 <Image
@@ -514,7 +500,8 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Category Banners */}
+      {/* ======================== CATEGORY BANNERS ======================== */}
+      {/* TODO: Link banners to their respective category pages */}
       <section className="px-4 sm:px-6 lg:px-8 pb-16 sm:pb-24">
         <div className="mx-auto w-full max-w-6xl">
           <AnimatedSection>
@@ -534,7 +521,8 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Sale Strip */}
+      {/* ======================== SALE STRIP ======================== */}
+      {/* Full-width promo banner with gradient background. */}
       <section className="px-4 sm:px-6 lg:px-8 pb-16 sm:pb-24">
         <div className="mx-auto w-full max-w-6xl">
           <div className="relative rounded-2xl overflow-hidden bg-gradient-to-r from-[#9B2C2C] to-[#7A1F1F] px-8 py-12 sm:py-16 text-center">
@@ -552,10 +540,7 @@ export default function Home() {
               <p className="mt-3 text-white/70 text-sm sm:text-base max-w-md mx-auto">
                 Premium unstitched suits, ready-to-wear ensembles, and more at unbeatable prices.
               </p>
-              <a
-                href="#products"
-                className="mt-6 inline-flex items-center gap-2 rounded-full bg-[#C9A96E] px-8 py-3.5 text-sm font-semibold text-white transition-all duration-700 ease-[cubic-bezier(0.32,0.72,0,1)] hover:bg-[#B8952E] focus-visible:ring-2 focus-visible:ring-white outline-none active:scale-[0.98]"
-              >
+              <a href="#products" className="mt-6 inline-flex items-center gap-2 rounded-full bg-[#C9A96E] px-8 py-3.5 text-sm font-semibold text-white transition-all duration-700 ease-[cubic-bezier(0.32,0.72,0,1)] hover:bg-[#B8952E] focus-visible:ring-2 focus-visible:ring-white outline-none active:scale-[0.98]">
                 Shop the Sale
               </a>
             </div>
@@ -563,8 +548,8 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Category Chips + Products */}
-      <section className="px-4 sm:px-6 lg:px-8 pb-8">
+      {/* ======================== PRODUCTS: CHIPS + GRID ======================== */}
+      <section className="px-4 sm:px-6 lg:px-8 pb-8" id="products">
         <div className="mx-auto w-full max-w-6xl">
           <AnimatedSection>
             <span className="inline-block rounded-full px-3 py-1 text-[10px] uppercase tracking-[0.25em] font-medium bg-[#C9A96E]/10 text-[#9B7E3A] mb-3">
@@ -580,6 +565,7 @@ export default function Home() {
             </div>
           </AnimatedSection>
 
+          {/* Category filter chips */}
           <AnimatedSection>
             <div className="mt-6 flex items-center gap-2.5 overflow-x-auto pb-2" role="tablist" aria-label="Product categories">
               {categories.map((cat) => {
@@ -604,13 +590,11 @@ export default function Home() {
             </div>
           </AnimatedSection>
 
-          <div className="mt-8 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 sm:gap-6">
+          {/* Product grid */}
+          {/* TODO: Add sort controls (price, rating) */}
+          <div className="mt-8 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 sm:gap-6 ">
             {filteredProducts.map((product) => (
-              <ProductCard
-                key={product.id}
-                product={product}
-                onAddToCart={addToCart}
-              />
+              <ProductCard key={product.id} product={product} onAddToCart={addToCart} />
             ))}
           </div>
 
@@ -622,7 +606,7 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Features Strip */}
+      {/* ======================== FEATURES STRIP ======================== */}
       <section className="px-4 sm:px-6 lg:px-8 py-16 sm:py-20">
         <div className="mx-auto w-full max-w-6xl">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-6 sm:gap-8">
@@ -646,7 +630,7 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Footer */}
+      {/* ======================== FOOTER ======================== */}
       <footer className="bg-[#1A1A1A] text-zinc-400">
         <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8 py-14">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-8 pb-10 border-b border-white/10">
@@ -668,18 +652,16 @@ export default function Home() {
                 <ul className="space-y-2.5">
                   {group.links.map((link) => (
                     <li key={link}>
-                      <Link href="/" className="text-sm text-zinc-500 transition-colors duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] hover:text-[#C9A96E]">
-                        {link}
-                      </Link>
+                      <Link href="/" className="text-sm text-zinc-500 transition-colors duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] hover:text-[#C9A96E]">{link}</Link>
                     </li>
                   ))}
                 </ul>
               </div>
             ))}
           </div>
-          <div className="pt-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-zinc-600">
+          <div className="pt-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-white">
             <span>&copy; {new Date().getFullYear()} Rangkar. All rights reserved.</span>
-            <div className="flex items-center gap-6">
+            <div className="flex items-center gap-6 text-white">
               <span>Made with care in Pakistan</span>
             </div>
           </div>

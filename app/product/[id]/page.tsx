@@ -1,3 +1,13 @@
+// =============================================================================
+// PRODUCT DETAIL PAGE — /product/[id]
+// =============================================================================
+// Shows full product info: zoom-able image, quantity selector, add-to-cart
+// with loading state, trust badges, and "You May Also Like" related products.
+//
+// Dynamic route — looks up product by ID from the products array in data.ts.
+// Shows a 404 state if the product ID doesn't exist.
+// =============================================================================
+
 "use client";
 
 import Link from "next/link";
@@ -8,6 +18,7 @@ import { products, formatPKR } from "@/app/lib/data";
 import type { Product } from "@/app/lib/data";
 import { useCart } from "@/app/context/cart";
 
+// ====================== STAR RATING ======================
 function Stars({ rating }: { rating: number }) {
   return (
     <span className="text-amber-600/70 text-sm tracking-[0.15em]" aria-label={`${rating} out of 5 stars`}>
@@ -17,6 +28,7 @@ function Stars({ rating }: { rating: number }) {
   );
 }
 
+// ====================== TOAST ======================
 function Toast({ message, visible }: { message: string; visible: boolean }) {
   return (
     <div
@@ -31,6 +43,7 @@ function Toast({ message, visible }: { message: string; visible: boolean }) {
   );
 }
 
+// ====================== HOOK: SCROLL REVEAL ======================
 function useScrollReveal(threshold = 0.08) {
   const ref = useRef<HTMLDivElement>(null);
   const [visible, setVisible] = useState(false);
@@ -54,6 +67,7 @@ function useScrollReveal(threshold = 0.08) {
   return { ref, visible };
 }
 
+// ====================== ANIMATED SECTION ======================
 function AnimatedSection({ children, className = "" }: { children: React.ReactNode; className?: string }) {
   const { ref, visible } = useScrollReveal();
   return (
@@ -68,6 +82,11 @@ function AnimatedSection({ children, className = "" }: { children: React.ReactNo
   );
 }
 
+// ====================== RELATED PRODUCT CARD ======================
+/**
+ * Smaller product card used in the "You May Also Like" section.
+ * Has its own add-to-cart with inline toast (separate from the main toast).
+ */
 function RelatedProductCard({ product }: { product: Product }) {
   const { addToCart } = useCart();
   const [toastMsg, setToastMsg] = useState("");
@@ -97,7 +116,7 @@ function RelatedProductCard({ product }: { product: Product }) {
           <div className="bg-white rounded-2xl overflow-hidden ring-1 ring-black/5 shadow-[0_2px_20px_rgba(0,0,0,0.04)] hover:shadow-[0_8px_40px_rgba(0,0,0,0.08)] transition-all duration-700 ease-[cubic-bezier(0.32,0.72,0,1)]">
             <div className="relative aspect-[4/5] overflow-hidden bg-[#F5F0EB]">
               <Image
-                src={`https://picsum.photos/id/${product.imageId}/400/500`}
+                src={product.image}
                 alt={product.name}
                 fill
                 sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
@@ -139,6 +158,8 @@ function RelatedProductCard({ product }: { product: Product }) {
   );
 }
 
+// ====================== MAIN PAGE ======================
+
 export default function ProductDetail() {
   const params = useParams();
   const id = Number(params.id);
@@ -149,21 +170,26 @@ export default function ProductDetail() {
   const [toastMsg, setToastMsg] = useState("");
   const [toastVisible, setToastVisible] = useState(false);
   const [adding, setAdding] = useState(false);
+
+  // -------- Image zoom state --------
   const [zoomPos, setZoomPos] = useState({ x: 50, y: 50 });
   const [zooming, setZooming] = useState(false);
   const imageRef = useRef<HTMLDivElement>(null);
 
+  // -------- Add to cart with loading spinner --------
   const handleAdd = useCallback(async () => {
     if (!product) return;
     setAdding(true);
     addToCart(product, quantity);
-    await new Promise((r) => setTimeout(r, 600));
+    await new Promise((r) => setTimeout(r, 600)); // brief spinner for UX
     setToastMsg(`${quantity} \u00d7 ${product.name} added to cart\u2026`);
     setToastVisible(true);
     setAdding(false);
     setTimeout(() => setToastVisible(false), 2500);
   }, [addToCart, product, quantity]);
 
+  // -------- Mouse-follow zoom lens --------
+  // Tracks cursor position over the image and applies transform-origin for CSS scale(1.5)
   const handleMouseMove = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
     const rect = imageRef.current?.getBoundingClientRect();
     if (!rect) return;
@@ -176,10 +202,12 @@ export default function ProductDetail() {
     ? Math.round((1 - product.price / product.originalPrice) * 100)
     : 0;
 
+  // Related products: same category, max 4, exclude current product
   const related = products
     .filter((p) => p.category === product?.category && p.id !== product?.id)
     .slice(0, 4);
 
+  // -------- 404 State --------
   if (!product) {
     return (
       <div className="min-h-screen bg-[#FDFBF7] flex items-center justify-center px-4">
@@ -189,10 +217,7 @@ export default function ProductDetail() {
           </span>
           <h1 className="text-3xl font-bold text-[#1A1A1A]">Product Not Found</h1>
           <p className="mt-3 text-zinc-500 text-sm">The product you&apos;re looking for doesn&apos;t exist or has been removed.</p>
-          <Link
-            href="/"
-            className="mt-6 inline-flex items-center gap-2 rounded-full bg-[#1A1A1A] px-6 py-3 text-sm font-semibold text-white transition-all duration-700 ease-[cubic-bezier(0.32,0.72,0,1)] hover:bg-[#9B2C2C] focus-visible:ring-2 focus-visible:ring-[#C9A96E] outline-none"
-          >
+          <Link href="/" className="mt-6 inline-flex items-center gap-2 rounded-full bg-[#1A1A1A] px-6 py-3 text-sm font-semibold text-white transition-all duration-700 ease-[cubic-bezier(0.32,0.72,0,1)] hover:bg-[#9B2C2C] focus-visible:ring-2 focus-visible:ring-[#C9A96E] outline-none">
             Back to Home
           </Link>
         </div>
@@ -203,7 +228,7 @@ export default function ProductDetail() {
   return (
     <div className="min-h-screen bg-[#FDFBF7] text-[#1A1A1A] font-sans antialiased selection:bg-[#C9A96E]/30">
 
-      {/* Grain overlay */}
+      {/* ======================== GRAIN OVERLAY ======================== */}
       <div
         className="fixed inset-0 z-[60] pointer-events-none opacity-[0.015]"
         style={{
@@ -213,31 +238,29 @@ export default function ProductDetail() {
         aria-hidden="true"
       />
 
-      {/* Simple Nav */}
+      {/* ======================== SIMPLE NAV ======================== */}
+      {/* Minimal nav: logo + "Back to Home" link (not the full category list). */}
       <nav className="sticky top-0 z-40 flex justify-center px-4">
         <div className="flex items-center justify-between w-full max-w-6xl px-4 sm:px-6 h-16 bg-white/90 backdrop-blur-xl border-b border-black/5 shadow-sm">
           <Link href="/" className="text-lg font-bold tracking-tight text-[#1A1A1A]">
             <span className="text-[#9B2C2C]">Rang</span>kar
           </Link>
-          <Link
-            href="/"
-            className="flex items-center gap-2 text-[12px] font-medium uppercase tracking-[0.12em] text-zinc-500 transition-colors duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] hover:text-[#1A1A1A]"
-          >
+          <Link href="/" className="flex items-center gap-2 text-[12px] font-medium uppercase tracking-[0.12em] text-zinc-500 transition-colors duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] hover:text-[#1A1A1A]">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.2} strokeLinecap="round" strokeLinejoin="round" className="w-3.5 h-3.5" aria-hidden="true">
-              <path d="M19 12H5" />
-              <path d="M12 19l-7-7 7-7" />
+              <path d="M19 12H5" /><path d="M12 19l-7-7 7-7" />
             </svg>
             Back to Home
           </Link>
         </div>
       </nav>
 
-      {/* Product Detail */}
+      {/* ======================== PRODUCT DETAIL SECTION ======================== */}
+      {/* Two-column layout: image (zoom) on left, details (rating, price, qty, add-to-cart) on right. */}
       <section className="px-4 sm:px-6 lg:px-8 py-10 sm:py-16">
         <div className="mx-auto w-full max-w-6xl">
           <div className="flex flex-col lg:flex-row gap-10 lg:gap-16">
 
-            {/* Left — Image */}
+            {/* -------- LEFT: Image with mouse-follow zoom -------- */}
             <div className="flex-1 lg:max-w-[55%]">
               <div
                 ref={imageRef}
@@ -249,7 +272,7 @@ export default function ProductDetail() {
                 aria-label={product.name}
               >
                 <Image
-                  src={`https://picsum.photos/id/${product.imageId}/800/1000`}
+                  src={product.image}
                   alt={product.name}
                   fill
                   sizes="(max-width: 1024px) 100vw, 55vw"
@@ -258,7 +281,7 @@ export default function ProductDetail() {
                   }`}
                   style={
                     zooming
-                      ? { transformOrigin: `${zoomPos.x}% ${zoomPos.y}%` }
+                      ? { transformOrigin: `${zoomPos.x}% ${zoomPos.y}%` } // Zoom follows cursor
                       : undefined
                   }
                   priority
@@ -271,21 +294,26 @@ export default function ProductDetail() {
               </div>
             </div>
 
-            {/* Right — Details */}
+            {/* -------- RIGHT: Product details -------- */}
             <div className="flex-1 lg:max-w-[45%] flex flex-col justify-center">
               <AnimatedSection>
+                {/* Category label */}
                 <span className="inline-block text-[10px] uppercase tracking-[0.2em] font-medium text-zinc-400">
                   {product.category}
                 </span>
+
+                {/* Product name */}
                 <h1 className="mt-2 text-3xl sm:text-4xl lg:text-5xl font-bold tracking-[-0.03em] text-[#1A1A1A] leading-[1.1] text-pretty">
                   {product.name}
                 </h1>
 
+                {/* Stars */}
                 <div className="mt-4 flex items-center gap-3">
                   <Stars rating={product.rating} />
                   <span className="text-sm text-zinc-400">({product.rating})</span>
                 </div>
 
+                {/* Price + sale savings */}
                 <div className="mt-5 flex items-baseline gap-3">
                   <span className="text-3xl font-bold text-[#1A1A1A]">{formatPKR(product.price)}</span>
                   {product.isSale && (
@@ -296,11 +324,13 @@ export default function ProductDetail() {
                   )}
                 </div>
 
+                {/* Description */}
                 <p className="mt-6 text-sm leading-relaxed text-zinc-500 text-pretty">
                   {product.description}
                 </p>
 
-                {/* Quantity Selector */}
+                {/* -------- Quantity Selector -------- */}
+                {/* Min: 1, Max: 99. Uses direct input + +/- buttons. */}
                 <div className="mt-8">
                   <label htmlFor="quantity" className="text-[11px] uppercase tracking-[0.2em] font-medium text-zinc-400 mb-3 block">
                     Quantity
@@ -334,14 +364,14 @@ export default function ProductDetail() {
                       aria-label="Increase quantity"
                     >
                       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.2} strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4" aria-hidden="true">
-                        <path d="M12 5v14" />
-                        <path d="M5 12h14" />
+                        <path d="M12 5v14" /><path d="M5 12h14" />
                       </svg>
                     </button>
                   </div>
                 </div>
 
-                {/* Add to Cart */}
+                {/* -------- Add to Cart button -------- */}
+                {/* Shows loading spinner while adding, disabled during animation. */}
                 <button
                   type="button"
                   onClick={handleAdd}
@@ -361,15 +391,14 @@ export default function ProductDetail() {
                       Add to Cart
                       <span className="w-7 h-7 rounded-full bg-white/10 flex items-center justify-center transition-all duration-700 ease-[cubic-bezier(0.32,0.72,0,1)] group-hover:translate-x-0.5">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round" className="w-3.5 h-3.5" aria-hidden="true">
-                          <path d="M5 12h14" />
-                          <path d="M12 5l7 7-7 7" />
+                          <path d="M5 12h14" /><path d="M12 5l7 7-7 7" />
                         </svg>
                       </span>
                     </>
                   )}
                 </button>
 
-                {/* Trust badges */}
+                {/* -------- Trust badges -------- */}
                 <div className="mt-6 flex items-center gap-4 text-[11px] text-zinc-400">
                   <span className="flex items-center gap-1.5">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.2} strokeLinecap="round" strokeLinejoin="round" className="w-3.5 h-3.5" aria-hidden="true">
@@ -396,7 +425,7 @@ export default function ProductDetail() {
         </div>
       </section>
 
-      {/* You May Also Like */}
+      {/* ======================== YOU MAY ALSO LIKE ======================== */}
       {related.length > 0 && (
         <section className="px-4 sm:px-6 lg:px-8 pb-24 sm:pb-32">
           <div className="mx-auto w-full max-w-6xl">
@@ -409,6 +438,7 @@ export default function ProductDetail() {
               </h2>
             </AnimatedSection>
 
+            {/* 4-column grid of related product cards */}
             <div className="mt-8 grid grid-cols-2 md:grid-cols-4 gap-4 sm:gap-6">
               {related.map((p) => (
                 <RelatedProductCard key={p.id} product={p} />
@@ -418,6 +448,7 @@ export default function ProductDetail() {
         </section>
       )}
 
+      {/* Global toast for add-to-cart confirmation */}
       <Toast message={toastMsg} visible={toastVisible} />
     </div>
   );

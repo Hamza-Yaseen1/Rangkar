@@ -1,3 +1,13 @@
+// =============================================================================
+// CART PAGE — /cart
+// =============================================================================
+// Shows all items currently in the cart with quantity controls, subtotals,
+// a sticky order summary sidebar, and links to checkout or continue shopping.
+//
+// Reads cart state from CartContext (which persists to localStorage). Shows
+// an empty state with a call-to-action when there are no items.
+// =============================================================================
+
 "use client";
 
 import Link from "next/link";
@@ -6,6 +16,11 @@ import { useMemo } from "react";
 import { products, formatPKR } from "@/app/lib/data";
 import { useCart } from "@/app/context/cart";
 
+// ====================== CART ITEM CARD ======================
+/**
+ * Renders a single cart line item: thumbnail, name/category, price,
+ * quantity +/- controls, line subtotal, and a remove button.
+ */
 function CartItem({
   id,
   quantity,
@@ -26,10 +41,14 @@ function CartItem({
   return (
     <div className="group bg-white rounded-2xl ring-1 ring-black/5 shadow-[0_2px_20px_rgba(0,0,0,0.04)] transition-all duration-700 ease-[cubic-bezier(0.32,0.72,0,1)] hover:shadow-[0_8px_40px_rgba(0,0,0,0.08)]">
       <div className="flex flex-col sm:flex-row gap-4 sm:gap-6 p-4 sm:p-5">
-        {/* Image */}
-        <Link href={`/product/${product.id}`} className="relative w-full sm:w-24 h-28 sm:h-28 rounded-xl overflow-hidden bg-[#F5F0EB] shrink-0">
+
+        {/* -------- Product Thumbnail -------- */}
+        <Link
+          href={`/product/${product.id}`}
+          className="relative w-full sm:w-24 h-28 sm:h-28 rounded-xl overflow-hidden bg-[#F5F0EB] shrink-0"
+        >
           <Image
-            src={`https://picsum.photos/id/${product.imageId}/200/250`}
+            src={product.image}
             alt={product.name}
             fill
             sizes="96px"
@@ -42,22 +61,26 @@ function CartItem({
           )}
         </Link>
 
-        {/* Details */}
+        {/* -------- Details row: name, qty, subtotal, remove -------- */}
         <div className="flex-1 min-w-0 flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-6">
           <div className="flex-1 min-w-0">
+            {/* Category label */}
             <span className="text-[10px] uppercase tracking-[0.2em] font-medium text-zinc-400">
               {product.category}
             </span>
+            {/* Product name (clickable) */}
             <Link
               href={`/product/${product.id}`}
               className="mt-0.5 block text-sm font-medium text-[#1A1A1A] truncate hover:text-[#C9A96E] transition-colors duration-500 ease-[cubic-bezier(0.32,0.72,0,1)]"
             >
               {product.name}
             </Link>
+            {/* Unit price */}
             <p className="mt-1 text-sm font-semibold text-[#1A1A1A]">{formatPKR(product.price)}</p>
           </div>
 
-          {/* Quantity */}
+          {/* -------- Quantity Selector -------- */}
+          {/* Decrement removes the item if qty would go below 1 */}
           <div className="flex items-center gap-0">
             <button
               type="button"
@@ -91,16 +114,16 @@ function CartItem({
             </button>
           </div>
 
-          {/* Subtotal */}
+          {/* -------- Line Subtotal -------- */}
           <div className="text-right sm:w-24 shrink-0">
             <p className="text-sm font-bold text-[#1A1A1A]">{formatPKR(subtotal)}</p>
           </div>
 
-          {/* Remove */}
+          {/* -------- Remove Button -------- */}
           <button
             type="button"
             onClick={() => removeItem(product.id)}
-            className="p-2  rounded-full text-black-300 hover:text-[#9B2C2C] hover:bg-red-50 transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] focus-visible:ring-2 focus-visible:ring-[#C9A96E] outline-none"
+            className="p-2 rounded-full text-black-300 hover:text-[#9B2C2C] hover:bg-red-50 transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] focus-visible:ring-2 focus-visible:ring-[#C9A96E] outline-none"
             aria-label={`Remove ${product.name}`}
           >
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.2} strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5" aria-hidden="true">
@@ -116,9 +139,14 @@ function CartItem({
   );
 }
 
+// ====================== PAGE ======================
+
 export default function CartPage() {
   const { cart, cartCount, clearCart } = useCart();
 
+  // -------- Derive flat array of { id, quantity } from the cart map --------
+  // The cart Context stores items as { [productId]: quantity }.
+  // We convert it to an array for rendering, filtering out zero-quantity entries.
   const cartItems = useMemo(
     () =>
       Object.entries(cart)
@@ -127,6 +155,7 @@ export default function CartPage() {
     [cart],
   );
 
+  // -------- Calculate subtotal from cart items x product prices --------
   const subtotal = useMemo(
     () =>
       cartItems.reduce((sum, item) => {
@@ -139,7 +168,7 @@ export default function CartPage() {
   return (
     <div className="min-h-screen bg-[#FDFBF7] text-[#1A1A1A] font-sans antialiased selection:bg-[#C9A96E]/30">
 
-      {/* Grain overlay */}
+      {/* ======================== GRAIN OVERLAY ======================== */}
       <div
         className="fixed inset-0 z-[60] pointer-events-none opacity-[0.015]"
         style={{
@@ -149,34 +178,25 @@ export default function CartPage() {
         aria-hidden="true"
       />
 
-      {/* Nav */}
+      {/* ======================== NAV ======================== */}
+      {/* Sticky top bar with full category links (same as on checkout). */}
       <nav className="sticky top-0 z-40 flex justify-center px-4">
         <div className="flex items-center justify-between w-full max-w-6xl px-4 sm:px-6 h-16 bg-white/90 backdrop-blur-xl border-b border-black/5 shadow-sm">
           <Link href="/" className="text-lg font-bold tracking-tight text-[#1A1A1A]">
             <span className="text-[#9B2C2C]">Rang</span>kar
           </Link>
 
+          {/* Desktop category links */}
           <div className="hidden md:flex items-center gap-7 text-[12px] font-medium uppercase tracking-[0.12em] text-zinc-500">
-            <Link href="/" className="transition-colors duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] hover:text-[#1A1A1A]">
-              Home
-            </Link>
-            <Link href="/sale" className="text-[#9B2C2C] transition-colors duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] hover:text-[#C9A96E]">
-              Sale
-            </Link>
-            <Link href="/unstitched" className="transition-colors duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] hover:text-[#1A1A1A]">
-              Unstitched
-            </Link>
-            <Link href="/ready-to-wear" className="transition-colors duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] hover:text-[#1A1A1A]">
-              Ready to Wear
-            </Link>
-            <Link href="/men" className="transition-colors duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] hover:text-[#1A1A1A]">
-              Men
-            </Link>
-            <Link href="/beauty" className="transition-colors duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] hover:text-[#1A1A1A]">
-              Beauty
-            </Link>
+            <Link href="/" className="transition-colors duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] hover:text-[#1A1A1A]">Home</Link>
+            <Link href="/sale" className="text-[#9B2C2C] transition-colors duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] hover:text-[#C9A96E]">Sale</Link>
+            <Link href="/unstitched" className="transition-colors duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] hover:text-[#1A1A1A]">Unstitched</Link>
+            <Link href="/ready-to-wear" className="transition-colors duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] hover:text-[#1A1A1A]">Ready to Wear</Link>
+            <Link href="/men" className="transition-colors duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] hover:text-[#1A1A1A]">Men</Link>
+            <Link href="/beauty" className="transition-colors duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] hover:text-[#1A1A1A]">Beauty</Link>
           </div>
 
+          {/* Cart icon with badge */}
           <div className="flex items-center gap-2">
             <Link href="/cart" className="relative p-1">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.2} strokeLinecap="round" strokeLinejoin="round" className="w-[18px] h-[18px] text-zinc-400" aria-hidden="true">
@@ -194,12 +214,12 @@ export default function CartPage() {
         </div>
       </nav>
 
-      {/* Cart Content */}
+      {/* ======================== CART CONTENT ======================== */}
       <section className="px-4 sm:px-6 lg:px-8 py-10 sm:py-16">
         <div className="mx-auto w-full max-w-6xl">
 
           {cartItems.length === 0 ? (
-            /* Empty State */
+            /* -------- EMPTY CART STATE -------- */
             <div className="text-center py-20 sm:py-32 max-w-md mx-auto">
               <div className="mx-auto w-20 h-20 rounded-full bg-[#F5F0EB] flex items-center justify-center mb-6">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1} strokeLinecap="round" strokeLinejoin="round" className="w-9 h-9 text-zinc-300" aria-hidden="true">
@@ -227,7 +247,7 @@ export default function CartPage() {
             </div>
           ) : (
             <>
-              {/* Header */}
+              {/* -------- HEADER with Clear All -------- */}
               <div className="flex items-center justify-between mb-8">
                 <div>
                   <span className="inline-block rounded-full px-3 py-1 text-[10px] uppercase tracking-[0.25em] font-medium bg-[#C9A96E]/10 text-[#9B7E3A] mb-2">
@@ -237,6 +257,7 @@ export default function CartPage() {
                     Shopping Cart
                   </h1>
                 </div>
+                {/* Clear All empties the entire cart via CartContext */}
                 <button
                   type="button"
                   onClick={clearCart}
@@ -246,21 +267,23 @@ export default function CartPage() {
                 </button>
               </div>
 
+              {/* -------- TWO-COLUMN: items + summary -------- */}
               <div className="flex flex-col lg:flex-row gap-8 lg:gap-12">
-                {/* Cart Items */}
+                {/* Cart items list */}
                 <div className="flex-1 space-y-4">
                   {cartItems.map((item) => (
                     <CartItem key={item.id} id={item.id} quantity={item.quantity} />
                   ))}
                 </div>
 
-                {/* Order Summary */}
+                {/* -------- STICKY ORDER SUMMARY SIDEBAR -------- */}
                 <div className="w-full lg:w-80 shrink-0">
                   <div className="bg-white rounded-2xl ring-1 ring-black/5 shadow-[0_2px_20px_rgba(0,0,0,0.04)] p-6 sm:p-8 sticky top-24">
                     <h2 className="text-[11px] uppercase tracking-[0.2em] font-semibold text-zinc-400 mb-5">
                       Order Summary
                     </h2>
 
+                    {/* Subtotal + shipping line */}
                     <div className="space-y-3 text-sm">
                       <div className="flex items-center justify-between">
                         <span className="text-zinc-500">Subtotal ({cartCount} item{cartCount !== 1 ? "s" : ""})</span>
@@ -272,6 +295,7 @@ export default function CartPage() {
                       </div>
                     </div>
 
+                    {/* Total */}
                     <div className="mt-5 pt-5 border-t border-black/5">
                       <div className="flex items-center justify-between">
                         <span className="text-base font-semibold text-[#1A1A1A]">Total</span>
@@ -279,6 +303,7 @@ export default function CartPage() {
                       </div>
                     </div>
 
+                    {/* Proceed to Checkout */}
                     <Link
                       href="/checkout"
                       className="group mt-6 w-full inline-flex items-center justify-center gap-3 rounded-full bg-[#1A1A1A] px-8 py-4 text-sm font-semibold text-white transition-all duration-700 ease-[cubic-bezier(0.32,0.72,0,1)] hover:bg-[#9B2C2C] focus-visible:ring-2 focus-visible:ring-[#C9A96E] outline-none active:scale-[0.98]"
@@ -292,6 +317,7 @@ export default function CartPage() {
                       </span>
                     </Link>
 
+                    {/* Trust indicators */}
                     <div className="mt-4 flex items-center justify-center gap-4 text-[11px] text-zinc-400">
                       <span className="flex items-center gap-1.5">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.2} strokeLinecap="round" strokeLinejoin="round" className="w-3.5 h-3.5" aria-hidden="true">
@@ -307,6 +333,7 @@ export default function CartPage() {
                       </span>
                     </div>
 
+                    {/* Continue shopping link */}
                     <Link
                       href="/"
                       className="mt-4 block text-center text-[11px] uppercase tracking-[0.15em] font-medium text-zinc-400 transition-colors duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] hover:text-[#1A1A1A]"

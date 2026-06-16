@@ -1,3 +1,14 @@
+// =============================================================================
+// SHARED CATEGORY / SALE PAGE COMPONENT
+// =============================================================================
+// Used by all 5 category/sale pages: /sale, /unstitched, /ready-to-wear, /men, /beauty.
+// Provides the full page layout: grain overlay, announcement bar, sticky nav with
+// search/mobile-menu, hero banner, breadcrumb, scroll-reveal product grid,
+// features strip, footer, and toast notifications.
+//
+// Accepts props for title, subtitle, category/isSale filtering, and banner image.
+// =============================================================================
+
 "use client";
 
 import Link from "next/link";
@@ -7,6 +18,14 @@ import { products, formatPKR } from "@/app/lib/data";
 import type { Product } from "@/app/lib/data";
 import { useCart } from "@/app/context/cart";
 
+// ====================== HOOK: SCROLL REVEAL ======================
+/**
+ * IntersectionObserver-based hook that triggers a one-time fade-in animation
+ * when an element enters the viewport. Used by AnimatedSection and ProductCard.
+ *
+ * @param threshold - Intersection ratio to trigger (default 0.08 = 8% visible)
+ * @returns { ref, visible } — attach ref to your element, conditionally apply visible styles
+ */
 function useScrollReveal(threshold = 0.08) {
   const ref = useRef<HTMLDivElement>(null);
   const [visible, setVisible] = useState(false);
@@ -18,7 +37,7 @@ function useScrollReveal(threshold = 0.08) {
       ([entry]) => {
         if (entry.isIntersecting) {
           setVisible(true);
-          observer.unobserve(el);
+          observer.unobserve(el); // Only animate once
         }
       },
       { threshold },
@@ -30,6 +49,8 @@ function useScrollReveal(threshold = 0.08) {
   return { ref, visible };
 }
 
+// ====================== ANIMATED SECTION WRAPPER ======================
+/** Wraps any content with a fade-in + slide-up + blur-in animation on scroll. */
 function AnimatedSection({ children, className = "" }: { children: React.ReactNode; className?: string }) {
   const { ref, visible } = useScrollReveal();
   return (
@@ -44,6 +65,8 @@ function AnimatedSection({ children, className = "" }: { children: React.ReactNo
   );
 }
 
+// ====================== STAR RATING ======================
+/** Renders filled/empty star characters for a 0-5 rating value. */
 function Stars({ rating }: { rating: number }) {
   return (
     <span className="text-amber-600/70 text-xs tracking-[0.15em]" aria-label={`${rating} out of 5 stars`}>
@@ -53,6 +76,8 @@ function Stars({ rating }: { rating: number }) {
   );
 }
 
+// ====================== TOAST NOTIFICATION ======================
+/** Floating toast that appears at the bottom center of the screen. */
 function Toast({ message, visible }: { message: string; visible: boolean }) {
   return (
     <div
@@ -67,6 +92,9 @@ function Toast({ message, visible }: { message: string; visible: boolean }) {
   );
 }
 
+// ====================== NAV ICONS ======================
+
+/** Shopping cart icon with badge showing item count. Links to /cart. */
 function IconCart({ count }: { count: number }) {
   return (
     <Link
@@ -88,6 +116,7 @@ function IconCart({ count }: { count: number }) {
   );
 }
 
+/** User/profile icon button. No functionality yet — placeholder for auth. */
 function IconUser() {
   return (
     <button type="button" aria-label="User account" className="p-2 rounded-full hover:bg-black/5 transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] focus-visible:ring-2 focus-visible:ring-[#C9A96E] outline-none">
@@ -99,6 +128,7 @@ function IconUser() {
   );
 }
 
+/** Search icon used to toggle the search overlay. */
 function IconSearch() {
   return (
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.2} strokeLinecap="round" strokeLinejoin="round" className="w-[18px] h-[18px]" aria-hidden="true">
@@ -108,6 +138,14 @@ function IconSearch() {
   );
 }
 
+// ====================== PRODUCT CARD ======================
+/**
+ * Individual product card with:
+ * - Scroll-reveal animation
+ * - Sale badge (discount %)
+ * - Hover "Add to Cart" button
+ * - Star rating + price + "View Details" link
+ */
 function ProductCard({
   product,
   onAddToCart,
@@ -116,6 +154,7 @@ function ProductCard({
   onAddToCart: (p: Product) => void;
 }) {
   const { ref, visible } = useScrollReveal(0.05);
+  // Calculate discount percentage (e.g., 30% off)
   const discount = product.isSale
     ? Math.round((1 - product.price / product.originalPrice) * 100)
     : 0;
@@ -129,19 +168,22 @@ function ProductCard({
     >
       <div className="bg-white rounded-2xl overflow-hidden ring-1 ring-black/5 shadow-[0_2px_20px_rgba(0,0,0,0.04)] hover:shadow-[0_8px_40px_rgba(0,0,0,0.08)] transition-all duration-700 ease-[cubic-bezier(0.32,0.72,0,1)]">
         <div className="relative aspect-[4/5] overflow-hidden bg-[#F5F0EB]">
+          {/* Product image — uses seed-based picsum URL from data.ts */}
           <Image
-            src={`https://picsum.photos/id/${product.imageId}/400/500`}
+            src={product.image}
             alt={product.name}
             fill
             sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
             className="object-cover transition-all duration-700 ease-[cubic-bezier(0.32,0.72,0,1)] group-hover:scale-105"
             loading="lazy"
           />
+          {/* Sale discount badge (top-left corner) */}
           {product.isSale && (
             <span className="absolute top-3 left-3 bg-[#9B2C2C] text-white text-[10px] font-bold uppercase tracking-[0.1em] px-3 py-1 rounded-full">
               -{discount}%
             </span>
           )}
+          {/* Hover overlay + quick-add button */}
           <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)]" />
           <div className="absolute bottom-0 left-0 right-0 p-4 translate-y-4 opacity-0 group-hover:translate-y-0 group-hover:opacity-100 transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)]">
             <button
@@ -153,6 +195,8 @@ function ProductCard({
             </button>
           </div>
         </div>
+
+        {/* Card info section */}
         <div className="p-4 sm:p-5">
           <span className="text-[10px] uppercase tracking-[0.2em] font-medium text-zinc-400">
             {product.category}
@@ -170,6 +214,7 @@ function ProductCard({
               <span className="text-sm text-zinc-400 line-through">{formatPKR(product.originalPrice)}</span>
             )}
           </div>
+          {/* View details link */}
           <Link
             href={`/product/${product.id}`}
             className="mt-3 block w-full rounded-full border border-black/10 px-4 py-2.5 text-[10px] font-medium uppercase tracking-[0.12em] text-zinc-500 text-center transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] hover:bg-[#F5F0EB] hover:text-[#1A1A1A] focus-visible:ring-2 focus-visible:ring-[#C9A96E] outline-none active:scale-[0.98]"
@@ -182,13 +227,17 @@ function ProductCard({
   );
 }
 
+// ====================== PROPS ======================
+
 interface CategoryPageProps {
-  title: string;
-  subtitle: string;
-  category?: Product["category"];
-  isSale?: boolean;
-  bannerImageId?: number;
+  title: string;                      // Page heading (e.g. "Men Collection")
+  subtitle: string;                   // Subtitle below the heading
+  category?: Product["category"];     // Filter by category name (e.g. "Men", "Beauty")
+  isSale?: boolean;                   // When true, shows only isSale products
+  bannerImageId?: number;             // Picsum ID for the hero banner image (default: 30)
 }
+
+// ====================== MAIN COMPONENT ======================
 
 export default function CategoryPage({
   title,
@@ -204,12 +253,14 @@ export default function CategoryPage({
   const [searchOpen, setSearchOpen] = useState(false);
   const searchRef = useRef<HTMLInputElement>(null);
 
+  // -------- Toast helper --------
   const showToast = useCallback((msg: string) => {
     setToastMsg(msg);
     setToastVisible(true);
     setTimeout(() => setToastVisible(false), 2500);
   }, []);
 
+  // Wraps the context addToCart with a toast notification
   const addToCart = useCallback(
     (product: Product) => {
       addToCartCtx(product);
@@ -218,6 +269,10 @@ export default function CategoryPage({
     [addToCartCtx, showToast],
   );
 
+  // -------- Filter products based on props --------
+  // If isSale → only products with isSale === true
+  // If category → only products with matching category
+  // Otherwise → all products (fallback)
   const filteredProducts = useMemo(
     () => products.filter((p) => {
       if (isSale) return p.isSale === true;
@@ -227,6 +282,7 @@ export default function CategoryPage({
     [category, isSale],
   );
 
+  // -------- Close mobile menu on Escape --------
   useEffect(() => {
     if (!menuOpen) return;
     const handler = (e: KeyboardEvent) => {
@@ -236,11 +292,13 @@ export default function CategoryPage({
     return () => window.removeEventListener("keydown", handler);
   }, [menuOpen]);
 
+  // -------- Prevent body scroll when mobile menu is open --------
   useEffect(() => {
     document.body.style.overflow = menuOpen ? "hidden" : "";
     return () => { document.body.style.overflow = ""; };
   }, [menuOpen]);
 
+  // -------- Auto-focus search input when overlay opens --------
   useEffect(() => {
     if (searchOpen && searchRef.current) {
       searchRef.current.focus();
@@ -248,9 +306,11 @@ export default function CategoryPage({
   }, [searchOpen]);
 
   return (
+    // Main page container — cream background, brand font/colors
     <div className="relative min-h-screen bg-[#FDFBF7] text-[#1A1A1A] font-sans antialiased selection:bg-[#C9A96E]/30">
 
-      {/* Grain overlay */}
+      {/* ======================== GRAIN OVERLAY ======================== */}
+      {/* Fine paper-texture noise overlays the entire page for a premium print feel. */}
       <div
         className="fixed inset-0 z-[60] pointer-events-none opacity-[0.015]"
         style={{
@@ -260,7 +320,8 @@ export default function CategoryPage({
         aria-hidden="true"
       />
 
-      {/* Announcement Bar */}
+      {/* ======================== ANNOUNCEMENT BAR ======================== */}
+      {/* TODO: Make this dismissable or link to /sale */}
       <div className="relative z-50 bg-[#1A1A1A] text-white text-center text-[11px] sm:text-xs font-medium uppercase tracking-[0.15em] py-2.5 px-4">
         <span className="inline-flex items-center gap-2">
           <span className="w-1.5 h-1.5 rounded-full bg-[#C9A96E]" />
@@ -269,9 +330,10 @@ export default function CategoryPage({
         </span>
       </div>
 
-      {/* Nav */}
+      {/* ======================== STICKY NAV ======================== */}
       <nav className="sticky top-0 z-40 flex justify-center px-4" aria-label="Main navigation">
         <div className="flex items-center justify-between w-full max-w-6xl px-4 sm:px-6 h-16 bg-white/90 backdrop-blur-xl border-b border-black/5 shadow-sm">
+          {/* Brand logo — links to home */}
           <Link
             href="/"
             className={`text-lg font-bold tracking-tight text-[#1A1A1A] transition-all duration-500 ${menuOpen ? "opacity-0 pointer-events-none" : ""}`}
@@ -280,6 +342,7 @@ export default function CategoryPage({
             <span className="text-[#9B2C2C]">Rang</span>kar
           </Link>
 
+          {/* Desktop nav links */}
           <div className="hidden md:flex items-center gap-7 text-[12px] font-medium uppercase tracking-[0.12em] text-zinc-500">
             <Link href="/" className="transition-colors duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] hover:text-[#1A1A1A]" tabIndex={menuOpen ? -1 : 0}>Home</Link>
             <Link href="/sale" className={`transition-colors duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] hover:text-[#C9A96E] ${isSale ? "text-[#9B2C2C]" : "text-zinc-500 hover:text-[#1A1A1A]"}`} tabIndex={menuOpen ? -1 : 0}>Sale</Link>
@@ -289,7 +352,9 @@ export default function CategoryPage({
             <Link href="/beauty" className="transition-colors duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] hover:text-[#1A1A1A]" tabIndex={menuOpen ? -1 : 0}>Beauty</Link>
           </div>
 
+          {/* Right-side icons: search, cart, user, hamburger */}
           <div className="flex items-center gap-0.5">
+            {/* Search toggle */}
             <button
               type="button"
               aria-label="Search products"
@@ -302,6 +367,7 @@ export default function CategoryPage({
             <IconCart count={cartCount} />
             <IconUser />
 
+            {/* Hamburger menu (mobile) */}
             <button
               type="button"
               aria-label={menuOpen ? "Close menu" : "Open menu"}
@@ -319,7 +385,8 @@ export default function CategoryPage({
         </div>
       </nav>
 
-      {/* Search overlay */}
+      {/* ======================== SEARCH OVERLAY ======================== */}
+      {/* TODO: Wire this up to actually filter products on the page */}
       <div
         className={`fixed inset-0 z-30 flex items-start justify-center pt-24 sm:pt-28 px-4 transition-all duration-700 ease-[cubic-bezier(0.32,0.72,0,1)] ${
           searchOpen ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"
@@ -345,7 +412,8 @@ export default function CategoryPage({
         <button type="button" aria-label="Close search" className="absolute inset-0 -z-10" onClick={() => setSearchOpen(false)} />
       </div>
 
-      {/* Mobile Menu */}
+      {/* ======================== MOBILE MENU ======================== */}
+      {/* Full-screen overlay with animated nav links */}
       <div
         className={`fixed inset-0 z-30 flex flex-col items-center justify-center gap-10 backdrop-blur-3xl bg-[#FDFBF7]/95 transition-all duration-700 ease-[cubic-bezier(0.32,0.72,0,1)] ${
           menuOpen ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"
@@ -369,7 +437,7 @@ export default function CategoryPage({
         ))}
       </div>
 
-      {/* Breadcrumb */}
+      {/* ======================== BREADCRUMB ======================== */}
       <section className="px-4 sm:px-6 lg:px-8 pt-6 pb-2">
         <div className="mx-auto w-full max-w-6xl">
           <nav className="flex items-center gap-2 text-[11px] uppercase tracking-[0.15em] font-medium text-zinc-400" aria-label="Breadcrumb">
@@ -382,17 +450,20 @@ export default function CategoryPage({
         </div>
       </section>
 
-      {/* Hero Banner */}
+      {/* ======================== HERO BANNER ======================== */}
+      {/* Gradient background: red for sale, dark charcoal for categories */}
       <section className="px-4 sm:px-6 lg:px-8 pt-6 pb-10 sm:pb-14">
         <div className="mx-auto w-full max-w-6xl">
           <AnimatedSection>
             <div className={`relative rounded-2xl overflow-hidden ${isSale ? "bg-gradient-to-r from-[#9B2C2C] to-[#7A1F1F]" : "bg-gradient-to-r from-[#1A1A1A] to-[#333]"} px-8 py-12 sm:py-16`}>
+              {/* Decorative background blurs */}
               <div className="absolute inset-0 opacity-10" aria-hidden="true">
                 <div className="absolute top-0 left-1/4 w-64 h-64 rounded-full bg-white blur-[80px]" />
                 <div className="absolute bottom-0 right-1/4 w-48 h-48 rounded-full bg-[#C9A96E] blur-[60px]" />
               </div>
               <div className="relative z-10 flex flex-col sm:flex-row items-center gap-6 sm:gap-10">
                 <div className="flex-1 text-center sm:text-left">
+                  {/* Badge: "Limited Offer" (sale) or "Collection" (category) */}
                   <span className={`inline-block rounded-full px-4 py-1 text-[10px] uppercase tracking-[0.25em] font-semibold mb-4 ${isSale ? "bg-white/10 text-white/80" : "bg-[#C9A96E]/10 text-[#C9A96E]"}`}>
                     {isSale ? "Limited Offer" : "Collection"}
                   </span>
@@ -402,10 +473,12 @@ export default function CategoryPage({
                   <p className="mt-3 text-white/70 text-sm sm:text-base max-w-md mx-auto sm:mx-0">
                     {subtitle}
                   </p>
+                  {/* Product count */}
                   <p className="mt-2 text-white/50 text-xs">
                     {filteredProducts.length} item{filteredProducts.length !== 1 ? "s" : ""}
                   </p>
                 </div>
+                {/* Hero image (rounded square thumbnail) */}
                 <div className="w-32 h-32 sm:w-40 sm:h-40 rounded-2xl overflow-hidden bg-white/10 shrink-0 ring-1 ring-white/10">
                   <Image
                     src={`https://picsum.photos/id/${bannerImageId}/200/200`}
@@ -421,10 +494,11 @@ export default function CategoryPage({
         </div>
       </section>
 
-      {/* Products */}
+      {/* ======================== PRODUCT GRID ======================== */}
       <section className="px-4 sm:px-6 lg:px-8 pb-8" id="products">
         <div className="mx-auto w-full max-w-6xl">
           {filteredProducts.length > 0 ? (
+            // 4-column responsive grid of ProductCards
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 sm:gap-6">
               {filteredProducts.map((product) => (
                 <ProductCard
@@ -435,6 +509,7 @@ export default function CategoryPage({
               ))}
             </div>
           ) : (
+            // Empty state — shown when no products match the filter
             <div className="text-center py-20">
               <div className="mx-auto w-16 h-16 rounded-full bg-[#F5F0EB] flex items-center justify-center mb-4">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1} strokeLinecap="round" strokeLinejoin="round" className="w-7 h-7 text-zinc-300" aria-hidden="true">
@@ -454,7 +529,8 @@ export default function CategoryPage({
         </div>
       </section>
 
-      {/* Features Strip */}
+      {/* ======================== FEATURES STRIP ======================== */}
+      {/* TODO: Replace SVG path data with imported icons if desired */}
       <section className="px-4 sm:px-6 lg:px-8 py-16 sm:py-20">
         <div className="mx-auto w-full max-w-6xl">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-6 sm:gap-8">
@@ -478,10 +554,11 @@ export default function CategoryPage({
         </div>
       </section>
 
-      {/* Footer */}
+      {/* ======================== FOOTER ======================== */}
       <footer className="bg-[#1A1A1A] text-zinc-400">
         <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8 py-14">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-8 pb-10 border-b border-white/10">
+            {/* Brand description */}
             <div className="col-span-2 md:col-span-1">
               <span className="text-lg font-bold text-white">
                 <span className="text-[#C9A96E]">Rang</span>kar
@@ -490,6 +567,7 @@ export default function CategoryPage({
                 Premium Pakistani fashion since 2025. Unstitched, ready-to-wear, and beauty essentials crafted for elegance.
               </p>
             </div>
+            {/* Footer link groups */}
             {[
               { title: "Shop", links: ["Sale", "Unstitched", "Ready to Wear", "Men", "Beauty"] },
               { title: "Support", links: ["Contact Us", "Shipping", "Returns", "FAQ"] },
@@ -500,6 +578,7 @@ export default function CategoryPage({
                 <ul className="space-y-2.5">
                   {group.links.map((link) => (
                     <li key={link}>
+                      {/* TODO: Update hrefs to point to real pages */}
                       <Link href="/" className="text-sm text-zinc-500 transition-colors duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] hover:text-[#C9A96E]">{link}</Link>
                     </li>
                   ))}
@@ -516,6 +595,7 @@ export default function CategoryPage({
         </div>
       </footer>
 
+      {/* Global toast */}
       <Toast message={toastMsg} visible={toastVisible} />
     </div>
   );

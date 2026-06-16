@@ -1,3 +1,13 @@
+// =============================================================================
+// ORDER NOTIFICATION EMAIL TEMPLATE
+// =============================================================================
+// React Email template rendered server-side by the /api/send-order endpoint.
+// Sent to both the store owner (notification) and the customer (confirmation).
+//
+// Uses @react-email/components for table-based layout (works in all email clients).
+// Styling uses inline styles (required for email) — match the brand's gold/maroon palette.
+// =============================================================================
+
 import {
   Html,
   Head,
@@ -12,11 +22,14 @@ import {
   Img,
 } from "@react-email/components";
 
+// ====================== SHARED TYPES ======================
+// These types are also used by the API route to validate the incoming order payload.
+
 export interface OrderItemData {
   name: string;
   price: number;
   quantity: number;
-  imageUrl: string;
+  imageUrl: string;   // Thumbnail URL for the item in the email
 }
 
 export interface CustomerData {
@@ -26,17 +39,19 @@ export interface CustomerData {
   city: string;
   state: string;
   zip: string;
-  email: string;
+  email: string;      // Optional — empty string if customer didn't provide it
 }
 
 export interface OrderData {
-  orderNumber: string;
-  createdAt: string;
+  orderNumber: string;  // e.g. "RKR-A3B7X9K2" — generated on the checkout page
+  createdAt: string;     // ISO 8601 timestamp
   customer: CustomerData;
   items: OrderItemData[];
-  subtotal: number;
-  total: number;
+  subtotal: number;      // Sum of all item prices × quantities
+  total: number;         // Currently same as subtotal (no shipping/tax yet)
 }
+
+// ====================== EMAIL COMPONENT ======================
 
 export default function OrderNotification({ order }: { order: OrderData }) {
   const formattedDate = new Date(order.createdAt).toLocaleString("en-PK", {
@@ -55,10 +70,12 @@ export default function OrderNotification({ order }: { order: OrderData }) {
   return (
     <Html>
       <Head />
+      {/* Preview text shown in email client inbox (before opening) */}
       <Preview>New Order #{order.orderNumber} — {formatPrice(order.total)}</Preview>
       <Body style={{ backgroundColor: "#FDFBF7", fontFamily: "system-ui, -apple-system, sans-serif", padding: "40px 20px" }}>
         <Container style={{ maxWidth: 600, margin: "0 auto" }}>
-          {/* Header */}
+
+          {/* -------- HEADER: Brand logo -------- */}
           <Section style={{ textAlign: "center", marginBottom: 32 }}>
             <Text style={{ fontSize: 28, fontWeight: 700, letterSpacing: "-0.03em", color: "#1A1A1A", margin: 0 }}>
               <span style={{ color: "#9B2C2C" }}>Rang</span>kar
@@ -69,7 +86,8 @@ export default function OrderNotification({ order }: { order: OrderData }) {
           </Section>
 
           <Section style={{ backgroundColor: "#ffffff", borderRadius: 16, padding: 32, border: "1px solid rgba(0,0,0,0.05)", boxShadow: "0 2px 20px rgba(0,0,0,0.04)" }}>
-            {/* Order Info */}
+
+            {/* -------- ORDER INFO: Number + Date -------- */}
             <Section style={{ marginBottom: 24 }}>
               <Row>
                 <Column>
@@ -93,7 +111,7 @@ export default function OrderNotification({ order }: { order: OrderData }) {
 
             <Hr style={{ border: "none", borderTop: "1px solid rgba(0,0,0,0.05)", margin: "24px 0" }} />
 
-            {/* Customer Info */}
+            {/* -------- CUSTOMER INFO -------- */}
             <Section style={{ marginBottom: 24 }}>
               <Text style={{ fontSize: 11, textTransform: "uppercase", letterSpacing: "0.2em", color: "#a1a1aa", fontWeight: 600, marginBottom: 8 }}>
                 Customer Details
@@ -116,13 +134,13 @@ export default function OrderNotification({ order }: { order: OrderData }) {
 
             <Hr style={{ border: "none", borderTop: "1px solid rgba(0,0,0,0.05)", margin: "24px 0" }} />
 
-            {/* Items */}
+            {/* -------- ORDER ITEMS TABLE -------- */}
             <Section>
               <Text style={{ fontSize: 11, textTransform: "uppercase", letterSpacing: "0.2em", color: "#a1a1aa", fontWeight: 600, marginBottom: 12 }}>
                 Order Items ({order.items.length})
               </Text>
 
-              {/* Table Header */}
+              {/* Header row */}
               <Row style={{ paddingBottom: 8, borderBottom: "1px solid rgba(0,0,0,0.05)", marginBottom: 8 }}>
                 <Column style={{ width: 44 }} />
                 <Column>
@@ -142,7 +160,7 @@ export default function OrderNotification({ order }: { order: OrderData }) {
                 </Column>
               </Row>
 
-              {/* Items */}
+              {/* Item rows */}
               {order.items.map((item, i) => (
                 <Row key={i} style={{ paddingTop: 8, paddingBottom: 8, borderBottom: i < order.items.length - 1 ? "1px solid rgba(0,0,0,0.03)" : "none" }}>
                   <Column style={{ width: 44, verticalAlign: "middle" }}>
@@ -178,16 +196,14 @@ export default function OrderNotification({ order }: { order: OrderData }) {
 
             <Hr style={{ border: "none", borderTop: "1px solid rgba(0,0,0,0.05)", margin: "24px 0" }} />
 
-            {/* Totals */}
+            {/* -------- TOTALS -------- */}
             <Section>
               <Row>
                 <Column />
                 <Column style={{ width: 200 }}>
                   <Row style={{ marginBottom: 8 }}>
                     <Column>
-                      <Text style={{ fontSize: 13, color: "#52525b", margin: 0 }}>
-                        Subtotal
-                      </Text>
+                      <Text style={{ fontSize: 13, color: "#52525b", margin: 0 }}>Subtotal</Text>
                     </Column>
                     <Column align="right">
                       <Text style={{ fontSize: 13, color: "#52525b", margin: 0 }}>
@@ -197,9 +213,7 @@ export default function OrderNotification({ order }: { order: OrderData }) {
                   </Row>
                   <Row style={{ marginBottom: 8 }}>
                     <Column>
-                      <Text style={{ fontSize: 13, color: "#52525b", margin: 0 }}>
-                        Shipping
-                      </Text>
+                      <Text style={{ fontSize: 13, color: "#52525b", margin: 0 }}>Shipping</Text>
                     </Column>
                     <Column align="right">
                       <Text style={{ fontSize: 13, color: "#16a34a", fontWeight: 600, margin: 0 }}>
@@ -210,9 +224,7 @@ export default function OrderNotification({ order }: { order: OrderData }) {
                   <Hr style={{ border: "none", borderTop: "1px solid rgba(0,0,0,0.08)", margin: "12px 0" }} />
                   <Row>
                     <Column>
-                      <Text style={{ fontSize: 16, fontWeight: 700, color: "#1A1A1A", margin: 0 }}>
-                        Total
-                      </Text>
+                      <Text style={{ fontSize: 16, fontWeight: 700, color: "#1A1A1A", margin: 0 }}>Total</Text>
                     </Column>
                     <Column align="right">
                       <Text style={{ fontSize: 20, fontWeight: 700, color: "#1A1A1A", margin: 0 }}>
@@ -225,7 +237,7 @@ export default function OrderNotification({ order }: { order: OrderData }) {
             </Section>
           </Section>
 
-          {/* Footer */}
+          {/* -------- FOOTER -------- */}
           <Section style={{ textAlign: "center", marginTop: 32 }}>
             <Text style={{ fontSize: 12, color: "#a1a1aa", margin: 0 }}>
               Rangkar — Premium Pakistani Fashion
